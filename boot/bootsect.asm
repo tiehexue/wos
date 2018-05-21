@@ -18,7 +18,7 @@ jmp $
 %include "boot/disk.asm"
 %include "boot/gdt.asm"
 %include "boot/32bit_print.asm"
-%include "boot/switch.asm"
+%include "boot/switch_pm.asm"
 
 [bits 16]
 load_kernel:
