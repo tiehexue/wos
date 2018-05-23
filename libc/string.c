@@ -1,4 +1,4 @@
-#include "strings.h"
+#include "string.h"
 
 void int_to_ascii(int n, char str[]) {
   int i, sign;
@@ -12,6 +12,27 @@ void int_to_ascii(int n, char str[]) {
   str[i] = '\0';
 
   reverse(str);
+}
+
+void int2hex(int val, char hex[]) {
+  append(hex, '0');
+  append(hex, 'x');
+
+  char zero = 0;
+
+  int tmp;
+  int i;
+  for (i = 28; i > 0; i -= 4) {
+    tmp = (val >> i) & 0xF;
+    if (tmp == 0 && zero ==0) continue;
+    zero = 1;
+    if (tmp > 0xA) append(hex, tmp - 0xA + 'a');
+    else append(hex, tmp + '0');
+  }
+
+  tmp = val & 0xF;
+  if (tmp > 0xA) append(hex, tmp - 0xA + 'a');
+  else append(hex, tmp + '0');
 }
 
 void reverse(char s[]) {

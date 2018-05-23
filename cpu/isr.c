@@ -4,7 +4,7 @@
 #include "../drivers/screen.h"
 #include "../drivers/keyboard.h"
 #include "../cpu/ports.h"
-#include "../libc/strings.h"
+#include "../libc/string.h"
 
 isr_t interrupt_handlers[256];
 

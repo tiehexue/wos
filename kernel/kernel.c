@@ -1,6 +1,7 @@
 #include "../drivers/screen.h"
 #include "../cpu/isr.h"
-#include "../libc/strings.h"
+#include "../libc/string.h"
+#include "../libc/mem.h"
 
 void main() {
   clear_screen();
@@ -27,6 +28,17 @@ void user_input(char *input) {
   if (strcmp(input, "END") == 0) {
     kprintln("Stopping the CPU, bye!");
     asm volatile("hlt");
+  } else if (strcmp(input, "PAGE") == 0) {
+    u32 phys_addr;
+    u32 page = kmalloc(1000, 1, &phys_addr);
+    char page_str[16] = "";
+    int2hex(page, page_str);
+    char phys_str[16] = "";
+    int2hex(phys_addr, phys_str);
+    kprint("Page: ");
+    kprint(page_str);
+    kprint(", physical address: ");
+    kprintln(phys_str);
   }
 
   kprint("You typed: ");
