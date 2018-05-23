@@ -6,6 +6,8 @@
 #include "../libc/function.h"
 #include "../kernel/kernel.h"
 
+#include <stdint.h>
+
 #define BACKSPACE 0x0E
 #define ENTER 0x1C
 
@@ -24,8 +26,8 @@ const char sc_ascii[] = { '?', '?', '1', '2', '3', '4', '5', '6',
   'H', 'J', 'K', 'L', ';', '\'', '`', '?', '\\', 'Z', 'X', 'C', 'V', 
   'B', 'N', 'M', ',', '.', '/', '?', '?', '?', ' '};
 
-static void keyboard_callback(registers_t regs) {
-  u8 scancode = port_byte_in(0x60);
+static void keyboard_callback(registers_t *regs) {
+  uint8_t scancode = port_byte_in(0x60);
     
   if (scancode > SC_MAX) return;
   if (scancode == BACKSPACE) {
@@ -41,7 +43,7 @@ static void keyboard_callback(registers_t regs) {
     append(key_buffer, letter);
     kprint(str);
   }
-  UNUSED(regs);
+  UNUSED(*regs);
 }
 
 void init_keyboard() {

@@ -3,22 +3,22 @@
 #include "../libc/string.h"
 #include "../libc/mem.h"
 
-void main() {
+#include <stdint.h>
+
+void kernel_main() {
   clear_screen();
   kprint("Hello, I am happy to see you.\n");
 
   isr_install();
 
-  __asm__ __volatile__("int $1");
-  __asm__ __volatile__("int $2");
-  __asm__ __volatile__("int $3");
-  __asm__ __volatile__("int $4");
-  __asm__ __volatile__("int $5");
-  __asm__ __volatile__("int $6");
+  asm volatile("int $1");
+  asm volatile("int $2");
+  asm volatile("int $3");
+  asm volatile("int $4");
+  asm volatile("int $5");
+  asm volatile("int $6");
 
-  __asm__ __volatile__("int $12");
   // int a = 3 / 0; // keep interrupting ?
-  __asm__ __volatile__("int $3");
 
   irq_install();
   kprint("shell$ ");
@@ -29,8 +29,8 @@ void user_input(char *input) {
     kprintln("Stopping the CPU, bye!");
     asm volatile("hlt");
   } else if (strcmp(input, "PAGE") == 0) {
-    u32 phys_addr;
-    u32 page = kmalloc(1000, 1, &phys_addr);
+    uint32_t phys_addr;
+    uint32_t page = kmalloc(1000, 1, &phys_addr);
     char page_str[16] = "";
     int2hex(page, page_str);
     char phys_str[16] = "";
