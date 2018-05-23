@@ -1,7 +1,7 @@
 C_SOURCES = $(wildcard kernel/*.c drivers/*.c cpu/*.c)
 HEADERS = $(wildcard kernel/*.h drivers/*.h cpu/*.h)
 
-OBJ = ${C_SOURCES:.c=.o}
+OBJ = ${C_SOURCES:.c=.o cpu/interrupt.o}
 
 CC = /usr/local/386gcc/bin/i386-elf-gcc
 LD = /usr/local/386gcc/bin/i386-elf-ld

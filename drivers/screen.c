@@ -31,6 +31,11 @@ void kprint(char *message) {
     kprint_at(message, -1, -1);
 }
 
+void kprintln(char *message) {
+    kprint(message);
+    kprint("\n");
+}
+
 int print_char(char c, int col, int row, char attr) {
     unsigned char *vidmem = (unsigned char*) VIDEO_ADDRESS;
     if (!attr) attr = WHITE_ON_BLACK;
