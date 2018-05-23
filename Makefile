@@ -1,15 +1,16 @@
-C_SOURCES = $(wildcard kernel/*.c drivers/*.c)
-HEADERS = $(wildcard kernel/*.h drivers/*.h)
+C_SOURCES = $(wildcard kernel/*.c drivers/*.c cpu/*.c)
+HEADERS = $(wildcard kernel/*.h drivers/*.h cpu/*.h)
 
 OBJ = ${C_SOURCES:.c=.o}
 
 CC = /usr/local/386gcc/bin/i386-elf-gcc
 LD = /usr/local/386gcc/bin/i386-elf-ld
+
 GDB = /usr/local/386gcc/bin/i386-elf-gdb
 QEMU = /usr/local/bin/qemu-system-i386
 NASM = /usr/local/Cellar/nasm/2.13.03/bin/nasm
 
-CFLAGS = -g
+CFLAGS = -g -Wint-conversion
 
 all: run
 
@@ -27,7 +28,7 @@ debug: os-image.bin kernel.elf
 	${GDB} -ex "target remote localhost:1234" -ex "symbol-file kernel.elf"
 
 %.o: %.c ${HEADERS}
-	${CC} ${CFLAGS} -ffreestanding -Wint-conversion -c $< -o $@
+	${CC} ${CFLAGS} -ffreestanding -c $< -o $@
 
 %.o: %.asm
 	${NASM} $< -f elf -o $@
