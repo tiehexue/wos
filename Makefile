@@ -10,7 +10,7 @@ GDB = /usr/local/386gcc/bin/i386-elf-gdb
 QEMU = /usr/local/bin/qemu-system-i386
 NASM = /usr/local/Cellar/nasm/2.13.03/bin/nasm
 
-CFLAGS = -g -Wint-conversion
+CFLAGS = -g -Wno-int-conversion
 
 all: run
 
