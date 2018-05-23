@@ -1,0 +1,22 @@
+It is intended to polish one OS specialized to VM or container. There should be plenty of small os for the purpose, and this one is just for fun and lucky.
+
+Here is the plan:
+1. Learning 32-bit os development
+1.1 boot
+1.2 basic os kernel, e.g. memory, process, file sytem.
+1.3 port libc
+
+2. Upgrade to 64-bit.
+2.1 KVM.
+2.2 Container functionality.
+
+3. Distributed OS
+3.1 network functionality
+3.2 distributed OS
+
+4. Hardware optimization
+Link servers as super-computer.
+
+Though plan is good, reality is real. It is just in 1.1, and most of code are re-typed through https://github.com/cfenollosa/os-tutorial
+
+Hope I will become more smart to continue.
