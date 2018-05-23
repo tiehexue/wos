@@ -1,5 +1,5 @@
-C_SOURCES = $(wildcard kernel/*.c drivers/*.c cpu/*.c)
-HEADERS = $(wildcard kernel/*.h drivers/*.h cpu/*.h)
+C_SOURCES = $(wildcard kernel/*.c drivers/*.c cpu/*.c libc/*.c)
+HEADERS = $(wildcard kernel/*.h drivers/*.h cpu/*.h libc/*.h)
 
 OBJ = ${C_SOURCES:.c=.o cpu/interrupt.o}
 
@@ -10,7 +10,8 @@ GDB = /usr/local/386gcc/bin/i386-elf-gdb
 QEMU = /usr/local/bin/qemu-system-i386
 NASM = /usr/local/Cellar/nasm/2.13.03/bin/nasm
 
-CFLAGS = -g -Wno-int-conversion
+CFLAGS = -g -Wno-int-conversion -m32 -nostdlib -nostdinc -fno-builtin -fno-stack-protector \
+         -nostartfiles -nodefaultlibs -Wall -Wextra -Werror
 
 all: run
 

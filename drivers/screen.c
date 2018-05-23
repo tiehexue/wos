@@ -1,6 +1,6 @@
 #include "screen.h"
-#include "ports.h"
-#include "../kernel/util.h"
+#include "../cpu/ports.h"
+#include "../libc/mem.h"
 
 int get_cursor_offset();
 void set_cursor_offset(int offset);
@@ -34,6 +34,35 @@ void kprint(char *message) {
 void kprintln(char *message) {
   kprint(message);
   kprint("\n");
+}
+
+int kprint_backspace() {
+  int offset = get_cursor_offset() - 2;
+  
+  int col = get_offset_col(offset);
+
+  // magic number: the shell prompt.
+  if (col > 6) {
+    int row = get_offset_row(offset);
+    print_char(' ', col, row, WHITE_ON_BLACK);
+    set_cursor_offset(offset);
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
+void clear_screen() {
+  int screen_size = MAX_COLS * MAX_ROWS;
+  int i;
+  char *screen = VIDEO_ADDRESS;
+
+  for (i = 0; i < screen_size; i++) {
+    screen[i * 2] = ' ';
+    screen[i * 2 + 1] = WHITE_ON_BLACK;
+  }
+
+  set_cursor_offset(get_offset(0, 0));
 }
 
 int print_char(char c, int col, int row, char attr) {
@@ -90,19 +119,6 @@ void set_cursor_offset(int offset) {
   port_byte_out(REG_SCREEN_DATA, (unsigned char)(offset >> 8));
   port_byte_out(REG_SCREEN_CTRL, 15);
   port_byte_out(REG_SCREEN_DATA, (unsigned char)(offset & 0xff));
-}
-
-void clear_screen() {
-  int screen_size = MAX_COLS * MAX_ROWS;
-  int i;
-  char *screen = VIDEO_ADDRESS;
-
-  for (i = 0; i < screen_size; i++) {
-    screen[i * 2] = ' ';
-    screen[i * 2 + 1] = WHITE_ON_BLACK;
-  }
-
-  set_cursor_offset(get_offset(0, 0));
 }
 
 int get_offset(int col, int row) { return 2 * (row * MAX_COLS + col); }
