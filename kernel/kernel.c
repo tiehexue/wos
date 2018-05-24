@@ -1,5 +1,6 @@
 #include "../drivers/screen.h"
 #include "../cpu/isr.h"
+#include "../cpu/page.h"
 #include "../libc/string.h"
 #include "../libc/mem.h"
 
@@ -21,6 +22,8 @@ void kernel_main() {
   // int a = 3 / 0; // keep interrupting ?
 
   irq_install();
+  enablePaging();
+
   kprint("shell$ ");
 }
 

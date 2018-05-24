@@ -24,7 +24,7 @@ kernel.elf: boot/kernel_entry.o ${OBJ}
 	${LD} -o $@ -Ttext 0x1000 $^
 
 debug: os-image.bin kernel.elf
-	${QEMU} -s -fda os-image.bin -d guest_errors,int &
+	${QEMU} -s -fda os-image.bin -d guest_errors &
 	${GDB} -ex "target remote localhost:1234" -ex "symbol-file kernel.elf"
 
 %.o: %.c ${HEADERS}
