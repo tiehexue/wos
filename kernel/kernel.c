@@ -6,6 +6,8 @@
 
 #include <stdint.h>
 
+extern void paget_test(char *msg);
+
 void kernel_main() {
   clear_screen();
   kprint("Hello, I am happy to see you.\n");
@@ -22,7 +24,10 @@ void kernel_main() {
   // int a = 3 / 0; // keep interrupting ?
 
   irq_install();
+
+  paget_test("This should be printed.");
   enablePaging();
+  paget_test("This should not be printed, but page fault.");
 
   kprint("shell$ ");
 }

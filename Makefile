@@ -1,7 +1,9 @@
 C_SOURCES = $(wildcard kernel/*.c drivers/*.c cpu/*.c libc/*.c)
-HEADERS = $(wildcard kernel/*.h drivers/*.h cpu/*.h libc/*.h)
+TEST_SOURCES = $(wildcard test/*.c)
+HEADERS = $(wildcard kernel/*.h drivers/*.h cpu/*.h libc/*.h test/*.h)
 
 OBJ = ${C_SOURCES:.c=.o cpu/interrupt.o}
+TEST_OBJ = ${TEST_SOURCES:.c=.o}
 
 CC = /usr/local/386gcc/bin/i386-elf-gcc
 LD = /usr/local/386gcc/bin/i386-elf-ld
@@ -14,11 +16,14 @@ CFLAGS = -g -ffreestanding -Wno-int-conversion -m32 -Wall -Wextra -Werror
 
 all: run
 
-os-image.bin: boot/bootsect.bin kernel.bin
+os-image.bin: boot/bootsect.bin kernel.bin test.bin
 	cat $^ > $@
 
-kernel.bin: boot/kernel_entry.o ${OBJ}
+kernel.bin: boot/kernel_entry.o ${OBJ} ${TEST_OBJ}
 	${LD} -o $@ -Ttext 0x1000 $^ --oformat binary
+
+test.bin: ${TEST_OBJ}
+	${LD} -o $@ -Ttext 0x400000 $^ --oformat binary	
 
 kernel.elf: boot/kernel_entry.o ${OBJ}
 	${LD} -o $@ -Ttext 0x1000 $^
