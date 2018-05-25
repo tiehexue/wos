@@ -1,9 +1,8 @@
 C_SOURCES = $(wildcard kernel/*.c drivers/*.c cpu/*.c libc/*.c)
 TEST_SOURCES = $(wildcard test/*.c)
-HEADERS = $(wildcard kernel/*.h drivers/*.h cpu/*.h libc/*.h test/*.h)
+HEADERS = $(wildcard kernel/*.h drivers/*.h cpu/*.h libc/*.h)
 
 OBJ = ${C_SOURCES:.c=.o cpu/interrupt.o}
-TEST_OBJ = ${TEST_SOURCES:.c=.o}
 
 CC = /usr/local/386gcc/bin/i386-elf-gcc
 LD = /usr/local/386gcc/bin/i386-elf-ld
@@ -16,20 +15,17 @@ CFLAGS = -g -ffreestanding -Wno-int-conversion -m32 -Wall -Wextra -Werror
 
 all: run
 
-os-image.bin: boot/bootsect.bin kernel.bin test.bin
+os-image.bin: boot/bootsect.bin kernel.bin
 	cat $^ > $@
 
-kernel.bin: boot/kernel_entry.o ${OBJ} ${TEST_OBJ}
+kernel.bin: boot/kernel_entry.o ${OBJ}
 	${LD} -o $@ -Ttext 0x1000 $^ --oformat binary
-
-test.bin: ${TEST_OBJ}
-	${LD} -o $@ -Ttext 0x400000 $^ --oformat binary	
 
 kernel.elf: boot/kernel_entry.o ${OBJ}
 	${LD} -o $@ -Ttext 0x1000 $^
 
 debug: os-image.bin kernel.elf
-	${QEMU} -s -fda os-image.bin -d guest_errors &
+	${QEMU} -m 4G -s -fda os-image.bin -d guest_errors &
 	${GDB} -ex "target remote localhost:1234" -ex "symbol-file kernel.elf"
 
 %.o: %.c ${HEADERS}
@@ -42,7 +38,7 @@ debug: os-image.bin kernel.elf
 	${NASM} $< -f bin -o $@
 
 run: os-image.bin
-	${QEMU} -fda $<
+	${QEMU} -m 4G -fda $<
 
 clean: 
 	rm -rf *.bin *.o *.dis *.elf

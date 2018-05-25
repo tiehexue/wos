@@ -19,13 +19,11 @@ void kernel_main() {
   asm volatile("int $3");
   asm volatile("int $4");
   asm volatile("int $5");
-  asm volatile("int $6");
+  asm volatile("int $13");
 
   // int a = 3 / 0; // keep interrupting ?
 
   irq_install();
-
-  enablePaging();
 
   kprint("shell$ ");
 }
@@ -36,7 +34,7 @@ void user_input(char *input) {
     asm volatile("hlt");
   } else if (strcmp(input, "PAGE") == 0) {
     uint32_t phys_addr;
-    uint32_t page = kmalloc(1000, 1, &phys_addr);
+    uint32_t page = kmalloc_phys(0x1000, 1, &phys_addr);
     char page_str[16] = "";
     int2hex(page, page_str);
     char phys_str[16] = "";
@@ -45,6 +43,10 @@ void user_input(char *input) {
     kprint(page_str);
     kprint(", physical address: ");
     kprintln(phys_str);
+  } else if (strcmp(input, "JMP") == 0) {
+    asm volatile("jmp 0x910000");
+  } else if (strcmp(input, "PAGING") == 0) {
+    enablePaging();
   }
 
   kprint("You typed: ");
