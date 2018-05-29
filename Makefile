@@ -21,6 +21,10 @@ wos.bin: boot.o ${OBJ} interrupt.o
 boot.o:
 	${AS} boot/boot.s -o boot/$@
 
+debug: wos.bin
+	${QEMU} -s -kernel $< -d guest_errors &
+	${GDB} -ex "target remote localhost:1234" -ex "symbol-file $<"
+
 interrupt.o:
 	 nasm cpu/interrupt.asm -f elf -o cpu/$@
 

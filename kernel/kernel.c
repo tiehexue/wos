@@ -26,6 +26,8 @@ void kernel_main() {
   irq_install();
 
   kprint("shell$ ");
+
+  for(;;);
 }
 
 void user_input(char *input) {

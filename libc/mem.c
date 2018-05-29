@@ -12,7 +12,7 @@ void memory_set(uint8_t *dest, uint8_t val, uint32_t len) {
   for (; len != 0; len--) *temp++ = val;
 }
 
-uint32_t free_mem_addr = 0x100000;
+uint32_t free_mem_addr = 0xf00000;
 
 uint32_t kmalloc_phys(size_t size, int align, uint32_t *phys_addr) {
   if (align == 1 && (free_mem_addr & 0x00000FFF)) {
