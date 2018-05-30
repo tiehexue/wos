@@ -5,31 +5,30 @@ OBJ = ${C_SOURCES:.c=.o}
 
 CC = /usr/local/386gcc/bin/i386-elf-gcc
 LD = /usr/local/386gcc/bin/i386-elf-ld
-AS = /usr/local/386gcc/bin/i386-elf-as
-
+NASM = /usr/local/Cellar/nasm/2.13.03/bin/nasm
 GDB = /usr/local/386gcc/bin/i386-elf-gdb
+
+CFLAGS = -g -ffreestanding -Wno-int-conversion -m32 -Wall -Wextra -Werror \
+	-Wno-error=unused-function -Wno-error=unused-variable -Wno-error=unused-parameter
+ASFLAGS = -f elf
+
 QEMU = /usr/local/bin/qemu-system-i386
 
-CFLAGS = -g -ffreestanding -Wno-int-conversion -m32 -Wall -Wextra -Werror
+default: wos.bin
+	${QEMU} -kernel $<
 
-wos.bin: boot.o ${OBJ} interrupt.o
-	${CC} -T linker.ld -o wos.bin -ffreestanding -O2 boot/boot.o ${OBJ} cpu/interrupt.o -nostdlib
+wos.bin: ${OBJ} boot/boot.o cpu/interrupt.o cpu/gdt_flush.o
+	${CC} -T linker.ld -o wos.bin -ffreestanding -O2 boot/boot.o cpu/interrupt.o cpu/gdt_flush.o ${OBJ} -nostdlib
 
 %.o: %.c ${HEADERS}
 	${CC} ${CFLAGS} -c $< -o $@
 
-boot.o:
-	${AS} boot/boot.s -o boot/$@
+%.o: %.asm
+	${NASM} ${ASFLAGS} $<
 
 debug: wos.bin
 	${QEMU} -s -kernel $< -d guest_errors &
 	${GDB} -ex "target remote localhost:1234" -ex "symbol-file $<"
-
-interrupt.o:
-	 nasm cpu/interrupt.asm -f elf -o cpu/$@
-
-default: wos.bin
-	qemu-system-i386 -kernel $<
 
 clean: 
 	rm -rf *.o *.bin

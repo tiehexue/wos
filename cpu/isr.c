@@ -116,6 +116,11 @@ void isr_handler(registers_t *r) {
   int_to_ascii(r->int_no, s);
   kprintln(s);
   kprintln(exception_messages[r->int_no]);
+
+  if (interrupt_handlers[r->int_no] != 0) {
+    isr_t handler = interrupt_handlers[r->int_no];
+    handler(r);
+  }
 }
 
 void register_interrupt_handler(uint8_t n, isr_t handler) {
@@ -128,8 +133,8 @@ void irq_handler(registers_t *r) {
   port_byte_out(0x20, 0x20);
 
   if (interrupt_handlers[r->int_no] != 0) {
-  isr_t handler = interrupt_handlers[r->int_no];
-  handler(r);
+    isr_t handler = interrupt_handlers[r->int_no];
+    handler(r);
   }
 }
 

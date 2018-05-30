@@ -1,32 +1,37 @@
 #include "../drivers/screen.h"
 #include "../cpu/isr.h"
+#include "../cpu/gdt.h"
 #include "../cpu/page.h"
 #include "../libc/string.h"
 #include "../libc/mem.h"
+#include "multiboot.h"
 
 #include <stdint.h>
 
 extern void paget_test(char *msg);
 
-void kernel_main() {
+void kernel_main(multiboot_t *mboot_ptr) {
   clear_screen();
   kprint("Hello, I am happy to see you.\n");
 
+  init_gdt();
   isr_install();
 
   asm volatile("int $1");
   asm volatile("int $2");
   asm volatile("int $3");
   asm volatile("int $4");
-  asm volatile("int $5");
   asm volatile("int $13");
+  asm volatile("int $14");
 
   // int a = 3 / 0; // keep interrupting ?
 
   irq_install();
 
-  kprint("shell$ ");
+  init_paging();
 
+  asm volatile("int $14");
+  kprint("shell$ ");
   for(;;);
 }
 
@@ -45,10 +50,6 @@ void user_input(char *input) {
     kprint(page_str);
     kprint(", physical address: ");
     kprintln(phys_str);
-  } else if (strcmp(input, "JMP") == 0) {
-    asm volatile("jmp 0x910000");
-  } else if (strcmp(input, "PAGING") == 0) {
-    enablePaging();
   }
 
   kprint("You typed: ");
