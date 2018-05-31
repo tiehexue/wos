@@ -43,6 +43,12 @@ void kprint_hex(int a) {
   kprint(str);
 }
 
+void kprint_int(int a) {
+  char str[16];
+  int_to_ascii(a, str);
+  kprint(str);
+}
+
 int kprint_backspace() {
   int offset = get_cursor_offset() - 2;
   

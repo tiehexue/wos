@@ -84,7 +84,7 @@ page_directory_t *kernel_directory = 0;
 page_directory_t *current_directory = 0;  
 
 void init_paging() {
-  uint32_t mem_end_page = 0x1000000; // 16M
+  uint32_t mem_end_page = 0xFFFFFFFF; // 16M
 
   nframes = mem_end_page / 0x1000;
   frames = (uint32_t *)kmalloc_align(INDEX_FROM_BIT(nframes));

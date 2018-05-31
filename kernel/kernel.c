@@ -1,6 +1,7 @@
 #include "../drivers/screen.h"
 #include "../cpu/isr.h"
 #include "../cpu/gdt.h"
+#include "../cpu/timer.h"
 #include "../cpu/page.h"
 #include "../libc/string.h"
 #include "../libc/mem.h"
@@ -53,6 +54,20 @@ void kernel_main(multiboot_t *mboot_ptr) {
   kprint("d: ");
   kprint_hex(d);
   kprintln("");
+
+  for(;;) {
+    wait(200);
+    uint32_t phys_addr;
+    uint32_t page = kmalloc_phys(0x500000, &phys_addr);
+    char page_str[16] = "";
+    int2hex(page, page_str);
+    char phys_str[16] = "";
+    int2hex(phys_addr, phys_str);
+    kprint("Page: ");
+    kprint(page_str);
+    kprint(", physical address: ");
+    kprintln(phys_str);
+  }
 
   kprint("shell$ ");
   for(;;);

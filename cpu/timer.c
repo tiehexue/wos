@@ -8,6 +8,7 @@ uint32_t tick = 0;
 
 static void timer_callback(registers_t *regs) {
   tick++;
+
   UNUSED(*regs);
 }
 
@@ -21,4 +22,13 @@ void init_timer(uint32_t freq) {
   port_byte_out(0x43, 0x36);
   port_byte_out(0x40, low);
   port_byte_out(0x40, high);
+}
+
+void wait(uint32_t ticks) {
+  kprint("Current tick: ");
+  kprint_int(tick);
+  kprintln("");
+
+  uint32_t start = tick;
+  while (tick - start <= ticks);
 }

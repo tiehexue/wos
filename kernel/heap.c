@@ -11,20 +11,18 @@ extern page_directory_t *kernel_directory;
 heap_t *global_heap = 0;
 
 static uint32_t _kmalloc(uint32_t size, uint8_t align, uint32_t *phys) {
-  kprint("kmalloc now: placement_address -> ");
-  kprint_hex(placement_address);
-  kprint(", global_heap -> ");
-  kprint_hex(global_heap);
-  kprintln("");
-  
+  uint32_t returnAdrr = 0;
+  uint32_t *returnPhys = 0;
+
   if (global_heap != 0) {
     void *addr = alloc(size, align, global_heap);
     if (phys != 0) {
       page_t *page = get_page((uint32_t)addr, 0, kernel_directory);
       *phys = page->frame * 0x1000 + (uint32_t) ((uint32_t)addr & 0xFFF);
+      returnPhys = phys;
     }
 
-    return (uint32_t)addr;
+    returnAdrr = (uint32_t)addr;
   } else {
     if (align == 1 && (placement_address & 0x00000FFF)) {
       placement_address &= 0xFFFFF000;
@@ -33,12 +31,20 @@ static uint32_t _kmalloc(uint32_t size, uint8_t align, uint32_t *phys) {
 
     if (phys) {
       *phys = placement_address;
+      returnPhys = phys;
     }
 
-    uint32_t tmp = placement_address;
+    returnAdrr = placement_address;
     placement_address += size;
-    return tmp;
   }
+
+  kprint("kmalloc now: new addr -> ");
+  kprint_hex(returnAdrr);
+  kprint(", phys addr -> ");
+  kprint_hex(*returnPhys);
+  kprintln("");
+  
+  return returnAdrr;
 }
 
 uint32_t kmalloc_align(uint32_t size) {
@@ -62,6 +68,10 @@ void kfree(void *p) {
 }
 
 static void expand(uint32_t new_size, heap_t *heap) {
+  kprint("HAD TO EXPANED TO: ");
+  kprint_hex(new_size);
+  kprintln("");
+
   if ((new_size & 0x00000FFF) != 0) {
     new_size &= 0xFFFFF000;
     new_size += 0x1000;

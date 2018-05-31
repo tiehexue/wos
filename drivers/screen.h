@@ -16,5 +16,6 @@ void kprint(char *message);
 void kprintln(char *message);
 int kprint_backspace();
 void kprint_hex(int a);
+void kprint_int(int b);
 
 #endif
