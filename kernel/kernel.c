@@ -5,6 +5,7 @@
 #include "../libc/string.h"
 #include "../libc/mem.h"
 #include "multiboot.h"
+#include "heap.h"
 
 #include <stdint.h>
 
@@ -28,9 +29,31 @@ void kernel_main(multiboot_t *mboot_ptr) {
 
   irq_install();
 
+  asm volatile("int $14");
+
+  uint32_t a = kmalloc(8);
+  
   init_paging();
 
-  asm volatile("int $14");
+  uint32_t b = kmalloc(8);
+  uint32_t c = kmalloc(8);
+
+  kprint("a: ");
+  kprint_hex(a);
+  kprint(", b: ");
+  kprint_hex(b);
+  kprint(", c: ");
+  kprint_hex(c);
+  kprintln("");
+
+  kfree(c);
+  kfree(b);
+
+  uint32_t d = kmalloc(12);
+  kprint("d: ");
+  kprint_hex(d);
+  kprintln("");
+
   kprint("shell$ ");
   for(;;);
 }
@@ -41,7 +64,7 @@ void user_input(char *input) {
     asm volatile("hlt");
   } else if (strcmp(input, "PAGE") == 0) {
     uint32_t phys_addr;
-    uint32_t page = kmalloc_phys(0x1000, 1, &phys_addr);
+    uint32_t page = kmalloc_phys(0x1000, &phys_addr);
     char page_str[16] = "";
     int2hex(page, page_str);
     char phys_str[16] = "";

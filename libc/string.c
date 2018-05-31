@@ -15,6 +15,7 @@ void int_to_ascii(int n, char str[]) {
 }
 
 void int2hex(int val, char hex[]) {
+  hex[0] = '\0';
   append(hex, '0');
   append(hex, 'x');
 
