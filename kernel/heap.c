@@ -12,14 +12,12 @@ heap_t *global_heap = 0;
 
 static uint32_t _kmalloc(uint32_t size, uint8_t align, uint32_t *phys) {
   uint32_t returnAdrr = 0;
-  uint32_t *returnPhys = 0;
 
   if (global_heap != 0) {
     void *addr = alloc(size, align, global_heap);
-    if (phys != 0) {
+    if (phys) {
       page_t *page = get_page((uint32_t)addr, 0, kernel_directory);
-      *phys = page->frame * 0x1000 + (uint32_t) ((uint32_t)addr & 0xFFF);
-      returnPhys = phys;
+      *phys = page->frame * 0x1000 + (uint32_t)((uint32_t)addr & 0xFFF);
     }
 
     returnAdrr = (uint32_t)addr;
@@ -31,7 +29,6 @@ static uint32_t _kmalloc(uint32_t size, uint8_t align, uint32_t *phys) {
 
     if (phys) {
       *phys = placement_address;
-      returnPhys = phys;
     }
 
     returnAdrr = placement_address;
@@ -41,7 +38,10 @@ static uint32_t _kmalloc(uint32_t size, uint8_t align, uint32_t *phys) {
   kprint("kmalloc now: new addr -> ");
   kprint_hex(returnAdrr);
   kprint(", phys addr -> ");
-  kprint_hex(*returnPhys);
+  
+  if(phys) kprint_hex(*phys);
+  else kprint_hex(0);
+
   kprintln("");
   
   return returnAdrr;
