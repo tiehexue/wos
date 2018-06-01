@@ -83,12 +83,14 @@ void free_frame(page_t *page) {
 page_directory_t *kernel_directory = 0;
 page_directory_t *current_directory = 0;  
 
+extern uint32_t multiboot_mem_upper;
+
 void init_paging() {
-  uint32_t mem_end_page = 0xFFFFFFFF; // 16M
+  uint32_t mem_end_page = multiboot_mem_upper;
 
   nframes = mem_end_page / 0x1000;
-  frames = (uint32_t *)kmalloc_align(INDEX_FROM_BIT(nframes));
-  memory_set((uint8_t *)frames, 0, INDEX_FROM_BIT(nframes));
+  frames = (uint32_t *)kmalloc_align(nframes / 8);
+  memory_set((uint8_t *)frames, 0, nframes / 8);
 
   kernel_directory = (page_directory_t *)kmalloc_align(sizeof(page_directory_t));
   memory_set((uint8_t *)kernel_directory, 0, sizeof(page_directory_t));
@@ -134,7 +136,7 @@ page_t *get_page(uint32_t address, int make, page_directory_t *dir) {
   } else if (make) {
     uint32_t tmp;
     dir->tables[table_index] = (page_table_t *)kmalloc_align_phys(sizeof(page_table_t), &tmp);
-    memory_set((uint8_t *)dir->tables[table_index], 0, 0x1000);
+    memory_set((uint8_t *)dir->tables[table_index], 0, sizeof(page_table_t));
     dir->tablesPhysicalAddr[table_index] = tmp | 0x7;
     return &dir->tables[table_index]->pages[address % 1024];
   } else {
@@ -159,7 +161,7 @@ void page_fault(registers_t *regs) {
   if (us) kprint("user-mode ");
   if (reserved) kprint("reserved ");
 
-  kprint(") at 0x");
+  kprint(") at ");
   kprint_hex(fault_address);
   kprintln("");
 }

@@ -7,15 +7,15 @@ CC = /usr/local/386gcc/bin/i386-elf-gcc
 LD = /usr/local/386gcc/bin/i386-elf-ld
 NASM = /usr/local/Cellar/nasm/2.13.03/bin/nasm
 GDB = /usr/local/386gcc/bin/i386-elf-gdb
+QEMU = /usr/local/bin/qemu-system-i386
 
 CFLAGS = -g -ffreestanding -Wno-int-conversion -m32 -Wall -Wextra -Werror \
 	-Wno-error=unused-function -Wno-error=unused-variable -Wno-error=unused-parameter
 ASFLAGS = -f elf
-
-QEMU = /usr/local/bin/qemu-system-i386
+QEMUFLAGS = -hda hdd.img -m 4G -d guest_errors
 
 default: wos.bin
-	${QEMU} -kernel $<
+	${QEMU} -kernel $< ${QEMUFLAGS}
 
 wos.bin: ${OBJ} boot/boot.o cpu/interrupt.o cpu/gdt_flush.o
 	${CC} -T linker.ld -o wos.bin -ffreestanding -O2 boot/boot.o cpu/interrupt.o cpu/gdt_flush.o ${OBJ} -nostdlib
@@ -27,7 +27,7 @@ wos.bin: ${OBJ} boot/boot.o cpu/interrupt.o cpu/gdt_flush.o
 	${NASM} ${ASFLAGS} $<
 
 debug: wos.bin
-	${QEMU} -s -kernel $< -d guest_errors &
+	${QEMU} -s -kernel $< ${QEMUFLAGS} &
 	${GDB} -ex "target remote localhost:1234" -ex "symbol-file $<"
 
 clean: 

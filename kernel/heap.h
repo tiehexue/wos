@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include "../libc/ordered_array.h"
 
-#define HEAP_START 0xc0000000
+#define HEAP_START 0x10000000
 #define HEAP_INIT_SIZE 0x100000
 
 #define HEAP_INDEX_SIZE 0x20000

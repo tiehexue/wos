@@ -12,7 +12,12 @@
 
 extern void paget_test(char *msg);
 
+uint32_t multiboot_mem_upper = 0;
+
 void kernel_main(multiboot_t *mboot_ptr) {
+
+  multiboot_mem_upper = mboot_ptr->mem_upper * 1024;
+
   clear_screen();
   kprint("Hello, I am happy to see you.\n");
 
@@ -56,7 +61,7 @@ void kernel_main(multiboot_t *mboot_ptr) {
   kprintln("");
 
   for(;;) {
-    wait(200);
+    wait(40);
     uint32_t phys_addr;
     uint32_t page = kmalloc_phys(0x500000, &phys_addr);
     char page_str[16] = "";
