@@ -40,7 +40,7 @@ static uint32_t test_frame(uint32_t frame_addr) {
 
 static uint32_t first_frame() {
   uint32_t i, j;
-  for (i = 0; i < INDEX_FROM_BIT(nframes); i ++) {
+  for (i = 0; i < (nframes / 8); i ++) {
     if (frames[i] != 0xFFFFFFFF) {
       for (j = 0; j < 32; j++) {
         uint32_t toTest = 0x1 << j;
@@ -69,7 +69,6 @@ void alloc_frame(page_t *page, int is_kernel, int is_writable) {
   }
 }
 
-
 void free_frame(page_t *page) {
   uint32_t frame;
   if (!(frame = page->frame)) {
@@ -89,7 +88,7 @@ void init_paging() {
   uint32_t mem_end_page = multiboot_mem_upper;
 
   nframes = mem_end_page / 0x1000;
-  frames = (uint32_t *)kmalloc_align(nframes / 8);
+  frames = (uint32_t *)kmalloc(nframes / 8);
   memory_set((uint8_t *)frames, 0, nframes / 8);
 
   kernel_directory = (page_directory_t *)kmalloc_align(sizeof(page_directory_t));
@@ -111,7 +110,7 @@ void init_paging() {
     alloc_frame(get_page(i, 1, kernel_directory), 0, 0);
 
   register_interrupt_handler(14, page_fault);
-  register_interrupt_handler(13, page_fault);
+  //register_interrupt_handler(13, page_fault);
 
   switch_page_directory(kernel_directory);
 

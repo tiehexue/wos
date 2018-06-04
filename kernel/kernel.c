@@ -28,14 +28,14 @@ void kernel_main(multiboot_t *mboot_ptr) {
   asm volatile("int $2");
   asm volatile("int $3");
   asm volatile("int $4");
-  asm volatile("int $13");
-  asm volatile("int $14");
+  //asm volatile("int $13");
+  //asm volatile("int $14");
 
   // int a = 3 / 0; // keep interrupting ?
 
   irq_install();
 
-  asm volatile("int $14");
+  //asm volatile("int $14");
 
   uint32_t a = kmalloc(8);
   
