@@ -5,12 +5,15 @@
 #include "../cpu/page.h"
 #include "../libc/string.h"
 #include "../libc/mem.h"
+#include "../vfs/fs.h"
+#include "../vfs/initrd.h"
 #include "multiboot.h"
 #include "heap.h"
 
 #include <stdint.h>
 
 extern void paget_test(char *msg);
+extern uint32_t placement_address;
 
 uint32_t multiboot_mem_upper = 0;
 
@@ -37,41 +40,38 @@ void kernel_main(multiboot_t *mboot_ptr) {
 
   //asm volatile("int $14");
 
-  uint32_t a = kmalloc(8);
-  
+  // Initialise the initial ramdisk, and set it as the filesystem root.
+ 
+  placement_address = *(uint32_t *)(mboot_ptr->mods_addr + 4);
+
   init_paging();
 
-  uint32_t b = kmalloc(8);
-  uint32_t c = kmalloc(8);
+  fs_root = initialise_initrd(*((uint32_t *)mboot_ptr->mods_addr));
 
-  kprint("a: ");
-  kprint_hex(a);
-  kprint(", b: ");
-  kprint_hex(b);
-  kprint(", c: ");
-  kprint_hex(c);
-  kprintln("");
+  if (fs_root) {
+    int i = 0;
+    struct dirent *node = 0;
+    while((node = readdir_fs(fs_root, i)) != 0) {
+      kprint("Found file ");
+      kprint(node->name);
+      fs_node_t *fsnode = finddir_fs(fs_root, node->name);
 
-  kfree(c);
-  kfree(b);
-
-  uint32_t d = kmalloc(12);
-  kprint("d: ");
-  kprint_hex(d);
-  kprintln("");
-
-  for(;;) {
-    wait(40);
-    uint32_t phys_addr;
-    uint32_t page = kmalloc_phys(0x500000, &phys_addr);
-    char page_str[16] = "";
-    int2hex(page, page_str);
-    char phys_str[16] = "";
-    int2hex(phys_addr, phys_str);
-    kprint("Page: ");
-    kprint(page_str);
-    kprint(", physical address: ");
-    kprintln(phys_str);
+      if ((fsnode->flags&0x7) == FS_DIRECTORY) {
+        kprintln(" (directory)");
+      } else {
+        kprint(" contents: \"");
+        uint8_t max_size = 255;
+        uint8_t *buf = (uint8_t *)kmalloc(max_size);
+        //buf[0] = '\0';
+        uint32_t sz = read_fs(fsnode, 0, max_size, buf);
+        uint32_t j;
+        for (j = 0; j < sz; j++)
+          kprint(buf[j]);
+        
+        kprintln("\"");
+      }
+      i++;
+    }
   }
 
   kprint("shell$ ");

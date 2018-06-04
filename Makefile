@@ -1,5 +1,5 @@
-C_SOURCES = $(wildcard kernel/*.c drivers/*.c cpu/*.c libc/*.c)
-HEADERS = $(wildcard kernel/*.h drivers/*.h cpu/*.h libc/*.h)
+C_SOURCES = $(wildcard kernel/*.c drivers/*.c cpu/*.c libc/*.c vfs/*.c)
+HEADERS = $(wildcard kernel/*.h drivers/*.h cpu/*.h libc/*.h vfs/*.h)
 
 OBJ = ${C_SOURCES:.c=.o}
 
@@ -12,7 +12,7 @@ QEMU = /usr/local/bin/qemu-system-i386
 CFLAGS = -g -ffreestanding -Wno-int-conversion -m32 -Wall -Wextra -Werror \
 	-Wno-error=unused-function -Wno-error=unused-variable -Wno-error=unused-parameter
 ASFLAGS = -f elf
-QEMUFLAGS = -hda hdd.img -m 4G -d guest_errors
+QEMUFLAGS = -m 384M -d guest_errors -initrd initrd.img
 
 default: wos.bin
 	${QEMU} -kernel $< ${QEMUFLAGS}
@@ -32,4 +32,4 @@ debug: wos.bin
 
 clean: 
 	rm -rf *.o *.bin
-	rm -rf boot/*.o kernel/*.o drivers/*.o cpu/*.o libc/*.o
+	rm -rf boot/*.o kernel/*.o drivers/*.o cpu/*.o libc/*.o vfs/*.o

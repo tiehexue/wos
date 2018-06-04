@@ -35,14 +35,14 @@ static uint32_t _kmalloc(uint32_t size, uint8_t align, uint32_t *phys) {
     placement_address += size;
   }
 
-  kprint("kmalloc now: new addr -> ");
-  kprint_hex(returnAdrr);
-  kprint(", phys addr -> ");
+  //kprint("kmalloc now: new addr -> ");
+  //kprint_hex(returnAdrr);
+  //kprint(", phys addr -> ");
   
-  if(phys) kprint_hex(*phys);
-  else kprint_hex(0);
+  //if(phys) kprint_hex(*phys);
+  //else kprint_hex(0);
 
-  kprintln("");
+  //kprintln("");
   
   return returnAdrr;
 }
