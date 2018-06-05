@@ -47,33 +47,7 @@ void kernel_main(multiboot_t *mboot_ptr) {
   init_paging();
 
   fs_root = initialise_initrd(*((uint32_t *)mboot_ptr->mods_addr));
-
-  if (fs_root) {
-    int i = 0;
-    struct dirent *node = 0;
-    while((node = readdir_fs(fs_root, i)) != 0) {
-      kprint("Found file ");
-      kprint(node->name);
-      fs_node_t *fsnode = finddir_fs(fs_root, node->name);
-
-      if ((fsnode->flags&0x7) == FS_DIRECTORY) {
-        kprintln(" (directory)");
-      } else {
-        kprint(" contents: \"");
-        uint8_t max_size = 255;
-        uint8_t *buf = (uint8_t *)kmalloc(max_size);
-        //buf[0] = '\0';
-        uint32_t sz = read_fs(fsnode, 0, max_size, buf);
-        uint32_t j;
-        for (j = 0; j < sz; j++)
-          kprint(buf[j]);
-        
-        kprintln("\"");
-      }
-      i++;
-    }
-  }
-
+  kprintln("Initrd file initialized.");
   kprint("shell$ ");
   for(;;);
 }
@@ -93,6 +67,29 @@ void user_input(char *input) {
     kprint(page_str);
     kprint(", physical address: ");
     kprintln(phys_str);
+  } else if (strcmp(input, "INITRD") == 0) {
+    if (fs_root) {
+      int i = 0;
+      struct dirent *node = 0;
+      while((node = readdir_fs(fs_root, i)) != 0) {
+        kprint("Found file ");
+        kprint(node->name);
+        fs_node_t *fsnode = finddir_fs(fs_root, node->name);
+
+        if ((fsnode->flags&0x7) == FS_DIRECTORY) {
+          kprintln(" (directory)");
+        } else {
+          kprint(" contents: \"");
+          uint8_t *buf = kmalloc(fsnode->length + 1);
+          read_fs(fsnode, 0, fsnode->length, buf);
+          buf[fsnode->length] = '\0';
+
+          kprint((char *)buf);
+          kprintln("\"");
+        }
+        i++;
+      }
+    }
   }
 
   kprint("You typed: ");
