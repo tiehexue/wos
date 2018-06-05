@@ -27,10 +27,10 @@ void kernel_main(multiboot_t *mboot_ptr) {
   init_gdt();
   isr_install();
 
-  asm volatile("int $1");
-  asm volatile("int $2");
-  asm volatile("int $3");
-  asm volatile("int $4");
+  //asm volatile("int $1");
+  //asm volatile("int $2");
+  //asm volatile("int $3");
+  //asm volatile("int $4");
   //asm volatile("int $13");
   //asm volatile("int $14");
 
@@ -58,7 +58,7 @@ void user_input(char *input) {
     asm volatile("hlt");
   } else if (strcmp(input, "PAGE") == 0) {
     uint32_t phys_addr;
-    uint32_t page = kmalloc_phys(0x1000, &phys_addr);
+    uint32_t page = kmalloc_phys(0x40000000, &phys_addr);
     char page_str[16] = "";
     int2hex(page, page_str);
     char phys_str[16] = "";

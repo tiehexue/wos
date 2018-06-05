@@ -107,7 +107,7 @@ void init_paging() {
   }
 
   for (i = HEAP_START; i < HEAP_START + HEAP_INIT_SIZE; i += 0x1000)
-    alloc_frame(get_page(i, 1, kernel_directory), 0, 0);
+    alloc_frame(get_page(i, 1, kernel_directory), 0, 1);
 
   register_interrupt_handler(14, page_fault);
   //register_interrupt_handler(13, page_fault);
