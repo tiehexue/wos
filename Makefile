@@ -17,8 +17,8 @@ QEMUFLAGS = -m 4096M -d guest_errors -initrd initrd.img
 default: wos.bin
 	${QEMU} -kernel $< ${QEMUFLAGS}
 
-wos.bin: ${OBJ} boot/boot.o cpu/interrupt.o cpu/gdt_flush.o
-	${CC} -T linker.ld -o wos.bin -ffreestanding -O2 boot/boot.o cpu/interrupt.o cpu/gdt_flush.o ${OBJ} -nostdlib
+wos.bin: boot/boot.o cpu/interrupt.o cpu/gdt_flush.o cpu/process.o ${OBJ}
+	${CC} -T linker.ld -o $@ -ffreestanding -O2 $^ -nostdlib
 
 %.o: %.c ${HEADERS}
 	${CC} ${CFLAGS} -c $< -o $@
@@ -35,5 +35,5 @@ initrd.img:
 	./tools/generate_initrd ./tools/t1.txt ./tools/t2.txt
 
 clean: 
-	rm -rf *.o *.bin initrd.img
+	rm -rf *.o *.bin
 	rm -rf boot/*.o kernel/*.o drivers/*.o cpu/*.o libc/*.o vfs/*.o tools/generate_initrd

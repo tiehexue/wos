@@ -3,12 +3,13 @@
 #include "../cpu/ports.h"
 #include "isr.h"
 #include "../libc/function.h"
+#include "../kernel/task.h"
 
 uint32_t tick = 0;
 
 static void timer_callback(registers_t *regs) {
   tick++;
-
+  switch_task();
   UNUSED(*regs);
 }
 

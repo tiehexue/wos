@@ -9,6 +9,7 @@
 #include "../vfs/initrd.h"
 #include "multiboot.h"
 #include "heap.h"
+#include "task.h"
 
 #include <stdint.h>
 
@@ -16,10 +17,12 @@ extern void paget_test(char *msg);
 extern uint32_t placement_address;
 
 uint32_t multiboot_mem_upper = 0;
+uint32_t initial_esp;
 
-void kernel_main(multiboot_t *mboot_ptr) {
+void kernel_main(multiboot_t *mboot_ptr, uint32_t esp) {
 
   multiboot_mem_upper = mboot_ptr->mem_upper * 1024;
+  initial_esp = esp;
 
   clear_screen();
   kprint("Hello, I am happy to see you.\n");
@@ -46,10 +49,55 @@ void kernel_main(multiboot_t *mboot_ptr) {
 
   init_paging();
 
+  init_tasking();
+
   fs_root = initialise_initrd(*((uint32_t *)mboot_ptr->mods_addr));
   kprintln("Initrd file initialized.");
+
   kprint("shell$ ");
   for(;;);
+}
+
+void readInitrd() {
+  if (fs_root) {
+    int i = 0;
+    struct dirent *node = 0;
+    while((node = readdir_fs(fs_root, i)) != 0) {
+      kprint("Found file ");
+      kprint(node->name);
+      fs_node_t *fsnode = finddir_fs(fs_root, node->name);
+
+      if ((fsnode->flags&0x7) == FS_DIRECTORY) {
+        kprintln(" (directory)");
+      } else {
+        kprint(" contents: \"");
+        uint8_t *buf = kmalloc(fsnode->length + 1);
+        read_fs(fsnode, 0, fsnode->length, buf);
+        buf[fsnode->length] = '\0';
+
+        kprint((char *)buf);
+        kprintln("\"");
+      }
+      i++;
+    }
+  }
+}
+
+void new_task() {
+  int ret = fork();
+
+  kprint("fork() returned ");
+  kprint_hex(ret);
+  kprint(", and getpid() returned ");
+  kprint_hex(getpid());
+  kprintln("\n============================================================================");
+
+    // The next section of code is not reentrant so make sure we aren't interrupted during.
+  asm volatile("cli");
+    // list the contents of /
+  readInitrd();
+
+  asm volatile("sti");
 }
 
 void user_input(char *input) {
@@ -68,28 +116,9 @@ void user_input(char *input) {
     kprint(", physical address: ");
     kprintln(phys_str);
   } else if (strcmp(input, "INITRD") == 0) {
-    if (fs_root) {
-      int i = 0;
-      struct dirent *node = 0;
-      while((node = readdir_fs(fs_root, i)) != 0) {
-        kprint("Found file ");
-        kprint(node->name);
-        fs_node_t *fsnode = finddir_fs(fs_root, node->name);
-
-        if ((fsnode->flags&0x7) == FS_DIRECTORY) {
-          kprintln(" (directory)");
-        } else {
-          kprint(" contents: \"");
-          uint8_t *buf = kmalloc(fsnode->length + 1);
-          read_fs(fsnode, 0, fsnode->length, buf);
-          buf[fsnode->length] = '\0';
-
-          kprint((char *)buf);
-          kprintln("\"");
-        }
-        i++;
-      }
-    }
+    readInitrd();
+  } else if (strcmp(input, "FORK") == 0) {
+    new_task();
   }
 
   kprint("You typed: ");
