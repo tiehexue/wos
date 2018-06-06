@@ -9,8 +9,8 @@ NASM = /usr/local/Cellar/nasm/2.13.03/bin/nasm
 GDB = /usr/local/386gcc/bin/i386-elf-gdb
 QEMU = /usr/local/bin/qemu-system-i386
 
-CFLAGS = -g -ffreestanding -Wno-int-conversion -m32 -Wall -Wextra -Werror \
-	-Wno-error=unused-function -Wno-error=unused-variable -Wno-error=unused-parameter
+CFLAGS = -g -ffreestanding -Wno-int-conversion -Wno-error=incompatible-pointer-types -m32 -Wall -Wextra -Werror -Wno-error=parentheses \
+	-Wno-error=unused-function -Wno-error=sign-compare -Wno-error=unused-variable -Wno-error=unused-parameter
 ASFLAGS = -f elf
 QEMUFLAGS = -m 4096M -d guest_errors -initrd initrd.img
 

@@ -13,7 +13,7 @@
 
 #include <stdint.h>
 
-extern void paget_test(char *msg);
+extern void new_task();
 extern uint32_t placement_address;
 
 uint32_t multiboot_mem_upper = 0;
@@ -47,12 +47,14 @@ void kernel_main(multiboot_t *mboot_ptr, uint32_t esp) {
  
   placement_address = *(uint32_t *)(mboot_ptr->mods_addr + 4);
 
-  init_paging();
+  initialise_paging();
 
-  init_tasking();
+  initialise_tasking();
 
   fs_root = initialise_initrd(*((uint32_t *)mboot_ptr->mods_addr));
   kprintln("Initrd file initialized.");
+
+  new_task();
 
   kprint("shell$ ");
   for(;;);
@@ -86,18 +88,23 @@ void readInitrd() {
 void new_task() {
   int ret = fork();
 
-  kprint("fork() returned ");
-  kprint_hex(ret);
-  kprint(", and getpid() returned ");
-  kprint_hex(getpid());
-  kprintln("\n============================================================================");
+  if (ret == 0) {
+    kprintln("");
+    kprint("fork() returned ");
+    kprint_hex(ret);
+    kprint(", and getpid() returned ");
+    kprint_hex(getpid());
+    kprintln("\n============================================================================");
 
-    // The next section of code is not reentrant so make sure we aren't interrupted during.
-  asm volatile("cli");
-    // list the contents of /
-  readInitrd();
+      // The next section of code is not reentrant so make sure we aren't interrupted during.
+    asm volatile("cli");
+      // list the contents of /
+    readInitrd();
 
-  asm volatile("sti");
+    asm volatile("sti");
+  } else {
+    kprintln("Oh, this is parent.");
+  }
 }
 
 void user_input(char *input) {
@@ -106,7 +113,7 @@ void user_input(char *input) {
     asm volatile("hlt");
   } else if (strcmp(input, "PAGE") == 0) {
     uint32_t phys_addr;
-    uint32_t page = kmalloc_phys(0x40000000, &phys_addr);
+    uint32_t page = kmalloc_p(0x40000000, &phys_addr);
     char page_str[16] = "";
     int2hex(page, page_str);
     char phys_str[16] = "";

@@ -1,5 +1,11 @@
+// 
+// task.c - Implements the functionality needed to multitask.
+//          Written for JamesM's kernel development tutorials.
+//
+
 #include "task.h"
 #include "../libc/mem.h"
+#include "../cpu/page.h"
 #include "../kernel/heap.h"
 
 // The currently running task.
@@ -11,21 +17,22 @@ volatile task_t *ready_queue;
 // Some externs are needed to access members in paging.c...
 extern page_directory_t *kernel_directory;
 extern page_directory_t *current_directory;
-
+extern void alloc_frame(page_t*,int,int);
 extern uint32_t initial_esp;
 extern uint32_t read_eip();
+
+extern void perform_task_switch(uint32_t, uint32_t, uint32_t, uint32_t);
 
 // The next available process ID.
 uint32_t next_pid = 1;
 
-void init_tasking()
+void initialise_tasking()
 {
     // Rather important stuff happening, no interrupts please!
     asm volatile("cli");
 
     // Relocate the stack so we know where it is.
-    void *new_stack = (void *)kmalloc(0x2000);
-    move_stack(new_stack, 0x2000);
+    move_stack((void*)0xE0000000, 0x2000);
 
     // Initialise the first task (kernel task)
     current_task = ready_queue = (task_t*)kmalloc(sizeof(task_t));
@@ -68,16 +75,18 @@ void move_stack(void *new_stack_start, uint32_t size)
   uint32_t new_base_pointer  = old_base_pointer  + offset;
 
   // Copy the stack.
-  memory_copy((uint8_t *)new_stack_pointer, (uint8_t *)old_stack_pointer, initial_esp-old_stack_pointer);
+  memory_copy((void*)new_stack_pointer, (void*)old_stack_pointer, initial_esp-old_stack_pointer);
 
   // Backtrace through the original stack, copying new values into
   // the new stack.  
-  for(i = (uint32_t)new_stack_start; i > (uint32_t)new_stack_start-size; i -= 4) {
+  for(i = (uint32_t)new_stack_start; i > (uint32_t)new_stack_start-size; i -= 4)
+  {
     uint32_t tmp = * (uint32_t*)i;
     // If the value of tmp is inside the range of the old stack, assume it is a base pointer
     // and remap it. This will unfortunately remap ANY value in this range, whether they are
     // base pointers or not.
-    if (( old_stack_pointer < tmp) && (tmp < initial_esp)) {
+    if (( old_stack_pointer < tmp) && (tmp < initial_esp))
+    {
       tmp = tmp + offset;
       uint32_t *tmp2 = (uint32_t*)i;
       *tmp2 = tmp;
@@ -89,7 +98,7 @@ void move_stack(void *new_stack_start, uint32_t size)
   asm volatile("mov %0, %%ebp" : : "r" (new_base_pointer));
 }
 
-void switch_task()
+void task_switch()
 {
     // If we haven't initialised tasking yet, just return.
     if (!current_task)
@@ -135,25 +144,17 @@ void switch_task()
     // * Stop interrupts so we don't get interrupted.
     // * Temporarily puts the new EIP location in ECX.
     // * Loads the stack and base pointers from the new task struct.
-    // * Changes page directory to the physical address (directoryPhysicalAddr) of the new directory.
+    // * Changes page directory to the physical address (physicalAddr) of the new directory.
     // * Puts a dummy value (0x12345) in EAX so that above we can recognise that we've just
     //   switched task.
     // * Restarts interrupts. The STI instruction has a delay - it doesn't take effect until after
     //   the next instruction.
     // * Jumps to the location in ECX (remember we put the new EIP in there).
-    asm volatile("         \
-      cli;                 \
-      mov %0, %%ecx;       \
-      mov %1, %%esp;       \
-      mov %2, %%ebp;       \
-      mov %3, %%cr3;       \
-      mov $0x12345, %%eax; \
-      sti;                 \
-      jmp *%%ecx           "
-                 : : "r"(eip), "r"(esp), "r"(ebp), "r"(current_directory->directoryPhysicalAddr));
+    perform_task_switch(eip, current_directory->physicalAddr, ebp, esp);
 }
 
-uint32_t fork() {
+int fork()
+{
     // We are modifying kernel structures, and so cannot
     asm volatile("cli");
 
@@ -182,7 +183,6 @@ uint32_t fork() {
     uint32_t eip = read_eip();
 
 
-    uint32_t return_id = 0;
     // We could be the parent or the child here - check.
     if (current_task == parent_task)
     {
@@ -192,16 +192,19 @@ uint32_t fork() {
         new_task->esp = esp;
         new_task->ebp = ebp;
         new_task->eip = eip;
+        asm volatile("sti");
 
-        return_id = new_task->id;
+        return new_task->id;
     }
-    
-    asm volatile("sti");
+    else
+    {
+        // We are the child.
+        return 0;
+    }
 
-    return return_id;
 }
 
-uint32_t getpid()
+int getpid()
 {
     return current_task->id;
 }

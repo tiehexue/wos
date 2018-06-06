@@ -1,24 +1,38 @@
+// 
+// task.h - Defines the structures and prototypes needed to multitask.
+//          Written for JamesM's kernel development tutorials.
+//
+
 #ifndef TASK_H
 #define TASK_H
 
+#include "common.h"
 #include "../cpu/page.h"
 
-typedef struct task {
-  uint32_t id;
-  uint32_t esp, ebp;
-  uint32_t eip;
-  page_directory_t *page_directory;
-  struct task *next;
+// This structure defines a 'task' - a process.
+typedef struct task
+{
+    int id;                // Process ID.
+    uint32_t esp, ebp;       // Stack and base pointers.
+    uint32_t eip;            // Instruction pointer.
+    page_directory_t *page_directory; // Page directory.
+    struct task *next;     // The next task in a linked list.
 } task_t;
 
-void init_tasking();
+// Initialises the tasking system.
+void initialise_tasking();
 
-void switch_task();
+// Called by the timer hook, this changes the running process.
+void task_switch();
 
-uint32_t fork();
+// Forks the current process, spawning a new one with a different
+// memory space.
+int fork();
 
+// Causes the current process' stack to be forcibly moved to a new location.
 void move_stack(void *new_stack_start, uint32_t size);
 
-uint32_t getpid();
+// Returns the pid of the current process.
+int getpid();
 
 #endif
