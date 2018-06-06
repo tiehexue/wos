@@ -86,7 +86,7 @@ static void expand(uint32_t new_size, heap_t *heap)
     uint32_t old_size = heap->end_address-heap->start_address;
 
     uint32_t i = old_size;
-    while (i < new_size)
+    while (i <= new_size)
     {
         alloc_frame( get_page(heap->start_address+i, 1, kernel_directory),
                      (heap->supervisor)?1:0, (heap->readonly)?0:1);

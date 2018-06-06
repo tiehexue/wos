@@ -88,7 +88,7 @@ void alloc_frame(page_t *page, int is_kernel, int is_writeable)
     {
         uint32_t idx = first_frame();
        
-        if (idx > 262440) {
+        if (idx >= 263408) {
           kprint("FRAME INDEX: ");
           kprint_int(idx);
           kprintln("");
