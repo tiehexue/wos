@@ -19,6 +19,7 @@ uint32_t nframes;
 // Defined in kheap.c
 extern uint32_t placement_address;
 extern heap_t *kheap;
+extern uint32_t multiboot_mem_upper;
 
 extern void copy_page_physical(uint32_t, uint32_t);
 
@@ -86,9 +87,16 @@ void alloc_frame(page_t *page, int is_kernel, int is_writeable)
     else
     {
         uint32_t idx = first_frame();
-        if (idx == (uint32_t)-1)
+       
+        if (idx > 262440) {
+          kprint("FRAME INDEX: ");
+          kprint_int(idx);
+          kprintln("");
+        }
+
+        if (idx == (nframes - 1))
         {
-            // PANIC! no free frames!!
+            PANIC("OUT OF MEMORY");
         }
         set_frame(idx*0x1000);
         page->present = 1;
@@ -117,11 +125,11 @@ void initialise_paging()
 {
     // The size of physical memory. For the moment we 
     // assume it is 16MB big.
-    uint32_t mem_end_page = 0x1000000;
+    uint32_t mem_end_page = multiboot_mem_upper;
     
     nframes = mem_end_page / 0x1000;
-    frames = (uint32_t*)kmalloc(INDEX_FROM_BIT(nframes));
-    memory_set(frames, 0, INDEX_FROM_BIT(nframes));
+    frames = (uint32_t*)kmalloc(INDEX_FROM_BIT(nframes) * sizeof(uint32_t));
+    memory_set(frames, 0, INDEX_FROM_BIT(nframes) * sizeof(uint32_t));
     
     // Let's make a page directory.
     uint32_t phys;
@@ -135,7 +143,7 @@ void initialise_paging()
     // they need to be identity mapped first below, and yet we can't increase
     // placement_address between identity mapping and enabling the heap!
     int i = 0;
-    for (i = KHEAP_START; i < KHEAP_START+KHEAP_INITIAL_SIZE; i += 0x1000)
+    for (i = placement_address+0x1000; i < KHEAP_START+KHEAP_INITIAL_SIZE; i += 0x1000)
         get_page(i, 1, kernel_directory);
 
     // We need to identity map (phys addr = virt addr) from
@@ -166,7 +174,7 @@ void initialise_paging()
     switch_page_directory(kernel_directory);
 
     // Initialise the kernel heap.
-    kheap = create_heap(KHEAP_START, KHEAP_START+KHEAP_INITIAL_SIZE, 0xCFFFF000, 0, 0);
+    kheap = create_heap(KHEAP_START, KHEAP_START+KHEAP_INITIAL_SIZE, 0xFFFFFFFF, 0, 0);
 
     current_directory = clone_directory(kernel_directory);
     switch_page_directory(current_directory);

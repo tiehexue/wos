@@ -8,7 +8,7 @@
 
 // end is defined in the linker script.
 extern uint32_t end;
-uint32_t placement_address = (uint32_t)&end;
+extern uint32_t placement_address;
 extern page_directory_t *kernel_directory;
 heap_t *kheap=0;
 
@@ -26,7 +26,7 @@ uint32_t kmalloc_int(uint32_t sz, int align, uint32_t *phys)
     }
     else
     {
-        if (align == 1 && (placement_address & 0xFFFFF000) )
+        if (align == 1 && (placement_address & 0x00000FFF) )
         {
             // Align the placement address;
             placement_address &= 0xFFFFF000;
@@ -73,7 +73,7 @@ static void expand(uint32_t new_size, heap_t *heap)
     ASSERT(new_size > heap->end_address - heap->start_address);
 
     // Get the nearest following page boundary.
-    if ((new_size&0xFFFFF000) != 0)
+    if ((new_size&0x00000FFF) != 0)
     {
         new_size &= 0xFFFFF000;
         new_size += 0x1000;
@@ -101,9 +101,9 @@ static uint32_t contract(uint32_t new_size, heap_t *heap)
     ASSERT(new_size < heap->end_address-heap->start_address);
 
     // Get the nearest following page boundary.
-    if (new_size&0x1000)
+    if (new_size&0xFFF)
     {
-        new_size &= 0x1000;
+        new_size &= 0xFFFFF000;
         new_size += 0x1000;
     }
 

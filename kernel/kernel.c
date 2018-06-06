@@ -17,7 +17,8 @@ extern void new_task();
 extern uint32_t placement_address;
 
 uint32_t multiboot_mem_upper = 0;
-uint32_t initial_esp;
+uint32_t initial_esp = 0;
+uint32_t placement_address = 0;
 
 void kernel_main(multiboot_t *mboot_ptr, uint32_t esp) {
 
