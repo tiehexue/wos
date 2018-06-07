@@ -8,7 +8,7 @@
 #include "../vfs/fs.h"
 #include "../vfs/initrd.h"
 #include "multiboot.h"
-#include "heap.h"
+#include "dummyHeap.h"
 #include "task.h"
 
 #include <stdint.h>

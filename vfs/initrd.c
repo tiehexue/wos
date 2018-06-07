@@ -4,7 +4,7 @@
 #include "initrd.h"
 #include "../libc/mem.h"
 #include "../libc/string.h"
-#include "../kernel/heap.h"
+#include "../kernel/dummyHeap.h"
 #include "../drivers/screen.h"
 
 initrd_header_t *initrd_header;     // The header.

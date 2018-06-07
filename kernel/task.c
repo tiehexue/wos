@@ -6,7 +6,7 @@
 #include "task.h"
 #include "../libc/mem.h"
 #include "../cpu/page.h"
-#include "../kernel/heap.h"
+#include "../kernel/dummyHeap.h"
 
 // The currently running task.
 volatile task_t *current_task;

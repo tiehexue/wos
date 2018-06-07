@@ -30,6 +30,9 @@ debug: wos.bin
 	${QEMU} -s -kernel $< ${QEMUFLAGS} &
 	${GDB} -ex "target remote localhost:1234" -ex "symbol-file $<"
 
+remote: wos.bin
+	${QEMU} -s -kernel $< ${QEMUFLAGS}
+
 initrd.img:
 	cc -o tools/generate_initrd tools/generate_initrd.c
 	./tools/generate_initrd ./tools/t1.txt ./tools/t2.txt

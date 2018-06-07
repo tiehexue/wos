@@ -2,7 +2,8 @@
 //             Written for JamesM's kernel development tutorials.
 
 #include "page.h"
-#include "../kernel/heap.h"
+//#include "../kernel/heap.h"
+#include "../kernel/dummyHeap.h"
 #include "../libc/mem.h"
 #include "../drivers/screen.h"
 
@@ -15,11 +16,17 @@ page_directory_t *current_directory=0;
 // A bitset of frames - used or free.
 uint32_t *frames;
 uint32_t nframes;
+uint32_t current_frame_index = 0;
+uint32_t paging_enabled = 0;
 
 // Defined in kheap.c
 extern uint32_t placement_address;
-extern heap_t *kheap;
+//extern heap_t *kheap;
 extern uint32_t multiboot_mem_upper;
+
+extern uint32_t heapStart;
+extern uint32_t heapEnd;
+extern uint32_t currentHeapPosition;
 
 extern void copy_page_physical(uint32_t, uint32_t);
 
@@ -57,24 +64,25 @@ static uint32_t test_frame(uint32_t frame_addr)
 // Static function to find the first free frame.
 static uint32_t first_frame()
 {
-    uint32_t i, j;
-    for (i = 0; i < INDEX_FROM_BIT(nframes); i++)
-    {
-        if (frames[i] != 0xFFFFFFFF) // nothing free, exit early.
-        {
-            // at least one bit is free here.
-            for (j = 0; j < 32; j++)
-            {
-                uint32_t toTest = 0x1 << j;
-                if ( !(frames[i]&toTest) )
-                {
-                    return i*4*8+j;
-                }
-            }
-        }
-    }
-
-    return 0;
+    return current_frame_index++;
+//    uint32_t i, j;
+//    for (i = 0; i < INDEX_FROM_BIT(nframes); i++)
+//    {
+//        if (frames[i] != 0xFFFFFFFF) // nothing free, exit early.
+//        {
+//            // at least one bit is free here.
+//            for (j = 0; j < 32; j++)
+//            {
+//                uint32_t toTest = 0x1 << j;
+//                if ( !(frames[i]&toTest) )
+//                {
+//                    return i*4*8+j;
+//                }
+//            }
+//        }
+//    }
+//
+//    return 0;
 }
 
 // Function to allocate a frame.
@@ -87,12 +95,12 @@ void alloc_frame(page_t *page, int is_kernel, int is_writeable)
     else
     {
         uint32_t idx = first_frame();
-       
-        if (idx >= 263408) {
+
+       // if (idx >= 0) {
           kprint("FRAME INDEX: ");
           kprint_int(idx);
           kprintln("");
-        }
+       // }
 
         if (idx == (nframes - 1))
         {
@@ -137,44 +145,30 @@ void initialise_paging()
     memory_set(kernel_directory, 0, sizeof(page_directory_t));
     kernel_directory->physicalAddr = (uint32_t)kernel_directory->tablesPhysical;
 
-    // Map some pages in the kernel heap area.
-    // Here we call get_page but not alloc_frame. This causes page_table_t's 
-    // to be created where necessary. We can't allocate frames yet because they
-    // they need to be identity mapped first below, and yet we can't increase
-    // placement_address between identity mapping and enabling the heap!
-    int i = 0;
-    for (i = placement_address+0x1000; i < KHEAP_START+KHEAP_INITIAL_SIZE; i += 0x1000)
+    heapStart = (placement_address & 0xFFFFF000) + 0x5000;
+    heapEnd = mem_end_page & 0xFFFFF000;
+
+    uint32_t i = 0;
+    for (i = heapStart; i < heapEnd; i += 0x1000)
         get_page(i, 1, kernel_directory);
 
-    // We need to identity map (phys addr = virt addr) from
-    // 0x0 to the end of used memory, so we can access this
-    // transparently, as if paging wasn't enabled.
-    // NOTE that we use a while loop here deliberately.
-    // inside the loop body we actually change placement_address
-    // by calling kmalloc(). A while loop causes this to be
-    // computed on-the-fly rather than once at the start.
-    // Allocate a lil' bit extra so the kernel heap can be
-    // initialised properly.
-    i = 0;
-    while (i < placement_address+0x1000)
+    while (i < heapStart)
     {
         // Kernel code is readable but not writeable from userspace.
-        alloc_frame( get_page(i, 1, kernel_directory), 0, 0);
+        alloc_frame(get_page(i, 1, kernel_directory), 0, 1);
         i += 0x1000;
     }
 
-    // Now allocate those pages we mapped earlier.
-    for (i = KHEAP_START; i < KHEAP_START+KHEAP_INITIAL_SIZE; i += 0x1000)
-        alloc_frame( get_page(i, 1, kernel_directory), 0, 0);
+    for (i = heapStart; i < heapEnd; i += 0x1000)
+        alloc_frame(get_page(i, 1, kernel_directory), 0, 1);
 
-    // Before we enable paging, we must register our page fault handler.
     register_interrupt_handler(14, page_fault);
 
-    // Now, enable paging!
     switch_page_directory(kernel_directory);
 
-    // Initialise the kernel heap.
-    kheap = create_heap(KHEAP_START, KHEAP_START+KHEAP_INITIAL_SIZE, 0xFFFFFFFF, 0, 0);
+    paging_enabled = 1;
+
+    currentHeapPosition = heapStart;
 
     current_directory = clone_directory(kernel_directory);
     switch_page_directory(current_directory);
@@ -222,6 +216,14 @@ void page_fault(registers_t regs)
     // The faulting address is stored in the CR2 register.
     uint32_t faulting_address;
     asm volatile("mov %%cr2, %0" : "=r" (faulting_address));
+
+    page_t *page = get_page(faulting_address, 0, kernel_directory);
+    uint32_t dirIndex = faulting_address >> 22;
+    uint32_t tableIndex = (faulting_address << 10) >> 22;
+    kprint("DIRECTORY PAGE FRAME: ");
+    kprint_int(dirIndex);kprint(" ");
+    kprint_int(tableIndex);kprint(" ");
+    kprint_int(page->frame);kprintln("");
     
     // The error code gives us details of what happened.
     int present   = !(regs.err_code & 0x1); // Page not present
