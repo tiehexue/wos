@@ -1,38 +1,55 @@
-C_SOURCES = $(wildcard kernel/*.c drivers/*.c cpu/*.c libc/*.c vfs/*.c)
-HEADERS = $(wildcard kernel/*.h drivers/*.h cpu/*.h libc/*.h vfs/*.h)
+arch ?= x86_64
+kernel := build/kernel-$(arch).bin
+iso := build/os-$(arch).iso
 
-OBJ = ${C_SOURCES:.c=.o}
-
-CC = /usr/local/386gcc/bin/i386-elf-gcc
-LD = /usr/local/386gcc/bin/i386-elf-ld
+BIN_PREFIX = /usr/local/x86_64/bin
+CC = $(BIN_PREFIX)/x86_64-elf-gcc
+LD = $(BIN_PREFIX)/x86_64-elf-ld
 NASM = /usr/local/Cellar/nasm/2.13.03/bin/nasm
-GDB = /usr/local/386gcc/bin/i386-elf-gdb
-QEMU = /usr/local/bin/qemu-system-i386
+GDB = $(BIN_PREFIX)/x86_64-elf-gdb
+QEMU = /usr/local/bin/qemu-system-x86_64
+GRUB = $(BIN_PREFIX)/grub-mkrescue
 
-CFLAGS = -g -ffreestanding -Wno-int-conversion -Wno-error=incompatible-pointer-types -m32 -Wall -Wextra -Werror -Wno-error=parentheses \
-	-Wno-error=unused-function -Wno-error=sign-compare -Wno-error=unused-variable -Wno-error=unused-parameter
-ASFLAGS = -f elf
-QEMUFLAGS = -m 4096M -d guest_errors -initrd initrd.img
+CFLAGS = -g -ffreestanding
+ASFLAGS = -f elf64
+QEMUFLAGS = -m 4096M
 
-run: wos.bin
-	${QEMU} -s -kernel $< ${QEMUFLAGS} &
+linker := src/arch/$(arch)/linker.ld
+grub_cfg := src/arch/$(arch)/grub.cfg
+as_src := $(wildcard src/arch/$(arch)/*.asm)
+as_obj := $(patsubst src/arch/$(arch)/%.asm, \
+    build/arch/$(arch)/%.o, $(as_src))
 
-wos.bin: boot/boot.o cpu/interrupt.o cpu/gdt_flush.o cpu/process.o ${OBJ}
-	${CC} -T linker.ld -o $@ -ffreestanding -O2 $^ -nostdlib
+subdirs := $(wildcard src/*/)
+c_src := $(wildcard $(addsuffix *.c,$(subdirs)))
+c_obj := $(patsubst src/%.c, build/%.o,$(c_src))
 
-%.o: %.c ${HEADERS}
-	${CC} ${CFLAGS} -c $< -o $@
+.PHONY: all clean run iso
 
-%.o: %.asm
-	${NASM} ${ASFLAGS} $<
+all: $(kernel)
 
-debug: run
-	${GDB} -ex "target remote localhost:1234" -ex "symbol-file wos.bin"
+clean:
+	@rm -r build
 
-initrd.img:
-	cc -o tools/generate_initrd tools/generate_initrd.c
-	./tools/generate_initrd ./tools/t1.txt ./tools/t2.txt
+run: $(iso)
+	$(QEMU) $(QEMUFLAGS) -cdrom $(iso)
 
-clean: 
-	rm -rf *.o *.bin
-	rm -rf boot/*.o kernel/*.o drivers/*.o cpu/*.o libc/*.o vfs/*.o tools/generate_initrd
+iso: $(iso)
+
+$(iso): $(kernel) $(grub_cfg)
+	@mkdir -p build/isofiles/boot/grub
+	@cp $(kernel) build/isofiles/boot/kernel.bin
+	@cp $(grub_cfg) build/isofiles/boot/grub
+	$(GRUB) -o $(iso) build/isofiles 2> /dev/null
+	@rm -r build/isofiles
+
+$(kernel): $(as_obj) $(linker) $(c_obj)
+	$(LD) -n -T $(linker) -o $(kernel) $(as_obj) $(c_obj)
+
+build/%.o: src/%.c
+	@mkdir -p $(shell dirname $@)
+	$(CC) $(CFLAGS) $< -c -o $@
+
+build/arch/$(arch)/%.o: src/arch/$(arch)/%.asm
+	@mkdir -p $(shell dirname $@)
+	$(NASM) $(ASFLAGS) $< -o $@

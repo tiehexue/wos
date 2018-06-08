@@ -1,5 +1,5 @@
 #include "screen.h"
-#include "../cpu/ports.h"
+#include "ports.h"
 #include "../libc/memory.h"
 #include "../libc/string.h"
 
