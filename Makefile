@@ -14,8 +14,8 @@ CFLAGS = -g -ffreestanding -Wno-int-conversion -Wno-error=incompatible-pointer-t
 ASFLAGS = -f elf
 QEMUFLAGS = -m 4096M -d guest_errors -initrd initrd.img
 
-default: wos.bin
-	${QEMU} -kernel $< ${QEMUFLAGS}
+run: wos.bin
+	${QEMU} -s -kernel $< ${QEMUFLAGS} &
 
 wos.bin: boot/boot.o cpu/interrupt.o cpu/gdt_flush.o cpu/process.o ${OBJ}
 	${CC} -T linker.ld -o $@ -ffreestanding -O2 $^ -nostdlib
@@ -26,12 +26,8 @@ wos.bin: boot/boot.o cpu/interrupt.o cpu/gdt_flush.o cpu/process.o ${OBJ}
 %.o: %.asm
 	${NASM} ${ASFLAGS} $<
 
-debug: wos.bin
-	${QEMU} -s -kernel $< ${QEMUFLAGS} &
-	${GDB} -ex "target remote localhost:1234" -ex "symbol-file $<"
-
-remote: wos.bin
-	${QEMU} -s -kernel $< ${QEMUFLAGS}
+debug: run
+	${GDB} -ex "target remote localhost:1234" -ex "symbol-file wos.bin"
 
 initrd.img:
 	cc -o tools/generate_initrd tools/generate_initrd.c

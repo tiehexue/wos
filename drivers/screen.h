@@ -11,11 +11,19 @@
 #define REG_SCREEN_DATA 0x3d5
 
 void clear_screen();
+
+int kprint_backspace();
+
 void kprint_at(char *message, int col, int row);
 void kprint(char *message);
 void kprintln(char *message);
-int kprint_backspace();
+
 void kprint_hex(int a);
 void kprint_int(int b);
+
+void panic(char *message);
+
+#define kprintln_hex(x) kprint_hex(x);kprintln("");
+#define kprintln_int(x) kprint_int(x);kprintln("");
 
 #endif

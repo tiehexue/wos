@@ -1,18 +1,15 @@
-// initrd.c -- Defines the interface for and structures relating to the initial ramdisk.
-//  Written for JamesM's kernel development tutorials.
-
 #include "initrd.h"
-#include "../libc/mem.h"
+#include "../libc/memory.h"
 #include "../libc/string.h"
-#include "../kernel/dummyHeap.h"
+#include "../kernel/heap.h"
 #include "../drivers/screen.h"
 
-initrd_header_t *initrd_header;     // The header.
-initrd_file_header_t *file_headers; // The list of file headers.
-fs_node_t *initrd_root;     // Our root directory node.
-fs_node_t *initrd_dev;              // We also add a directory node for /dev, so we can mount devfs later on.
-fs_node_t *root_nodes;              // List of file nodes.
-uint32_t nroot_nodes;                    // Number of file nodes.
+initrd_header_t *initrd_header;
+initrd_file_header_t *file_headers;
+fs_node_t *initrd_root;
+fs_node_t *initrd_dev;
+fs_node_t *root_nodes;
+uint32_t nroot_nodes;
 
 struct dirent dirent;
 
@@ -22,7 +19,7 @@ static uint32_t initrd_read(fs_node_t *node, uint32_t offset, uint32_t size, uin
   if (offset > header.length) return 0;
   if (offset+size > header.length) size = header.length-offset;
 
-  memory_copy(buffer, (uint8_t*) (header.offset+offset), size);
+  memcpy(buffer, (uint8_t*) (header.offset+offset), size);
   return size;
 }
 
