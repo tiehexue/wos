@@ -1,0 +1,10 @@
+megs: 32
+romimage: file=/usr/local/Cellar/bochs/2.6.9_2/share/bochs/BIOS-bochs-latest
+vgaromimage: file=/usr/local/Cellar/bochs/2.6.9_2/share/bochs/VGABIOS-elpin-2.40
+ata0: enabled=1, ioaddr1=0x1f0, ioaddr2=0x3f0, irq=14
+ata0-master: type=cdrom, path="./build/os-x86_64.iso", status=inserted
+boot: cdrom
+log: bochsout.txt
+mouse: enabled=0
+clock: sync=realtime
+cpu: ips=1500000
