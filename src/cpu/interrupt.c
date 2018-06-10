@@ -2,6 +2,7 @@
 
 #include "ports.h"
 #include "../drivers/screen.h"
+#include "../libc/memory.h"
 
 extern void isr0();
 extern void isr1();
@@ -78,6 +79,7 @@ typedef struct {
 idt_entry idt_64[256];
 idtr idtr_64;
 
+void (*isr_handlers[32])(isr_regs*);
 void (*irq_handlers[16])(irq_regs*, void*);
 void* irq_handler_data[16];
 
@@ -101,30 +103,17 @@ void idt_set_gate(size_t gate, void (*function)(void)){
     entry.offset_high= addr  >> 32;
 }
 
-uint64_t get_cr2(){
-    uint64_t value;
-    asm volatile("mov %%rax, %%cr2" : :);
-    asm volatile("mov %0, %%rax;" : "=m" (value));
-    return value;
-}
-
-uint64_t get_cr3(){
-    uint64_t value;
-    asm volatile("mov %%rax, %%cr3; mov %0, %%rax;" : "=m" (value));
-    return value;
-}
-
 void install_idt(){
     //Set the correct values inside IDTR
-    idtr_64.limit = (64 * 16) - 1;
+    idtr_64.limit = (256 * sizeof(idt_entry)) - 1;
+    idtr_64.base = (size_t)&idt_64;
 
     //Give the IDTR address to the CPU
-    asm volatile("lidt %0" : : "m" (idtr_64));
+    //asm volatile("lidt %0" : : "m" (idtr_64));
+    asm volatile("lidt (%0)" : : "r" (&idtr_64));
 }
 
 void install_isrs(){
-    uint16_t gdt = 0x08;
-
     idt_set_gate(0, isr0);
     idt_set_gate(1, isr1);
     idt_set_gate(2, isr2);
@@ -203,7 +192,7 @@ void enable_interrupts(){
     asm volatile("sti" : : );
 }
 
-char* exceptions_title[32] = {
+char* exceptions_msg[32] = {
     "Division by zero",
     "Debugger",
     "NMI",
@@ -238,8 +227,15 @@ char* exceptions_title[32] = {
     "Reserved"
 };
 
-void isr_handler(isr_regs regs){
-    kprintln("SYSTEM INTERRUPT");
+void isr_handler(isr_regs* regs){
+  kprint("Received interrupt ");
+  asm volatile ("cli; hlt;");
+  kprintln_int(regs->error_no);
+  kprintln(exceptions_msg[regs->error_no]);
+
+  if (isr_handlers[regs->error_no] != 0) {
+    isr_handlers[regs->error_no](regs);
+  }
 }
 
 void irq_handler(irq_regs* regs){
@@ -292,10 +288,17 @@ bool unregister_irq_handler(size_t irq, void (*handler)(irq_regs*, void*)){
 }
 
 void interrupt_init(){
-    install_idt();
+    memset((uint8_t *)idt_64, 0, 64 * sizeof(idt_entry));
+    memset((uint8_t *)irq_handlers, 0, 16 * sizeof(size_t));
+    memset((uint8_t *)irq_handler_data, 0, 16 * sizeof(size_t));
+    memset((uint8_t *)isr_handlers, 0, 32 * sizeof(size_t));
+
     install_isrs();
+
     remap_irqs();
     install_irqs();
     
+    install_idt();
+
     enable_interrupts();
 }
