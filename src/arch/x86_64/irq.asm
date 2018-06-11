@@ -31,7 +31,7 @@ create_irq 15
 irq_common_handler:
   save_context
 
-  restore_kernel_segments
+  ;restore_kernel_segments
 
   mov rdi, rsp
   call irq_handler

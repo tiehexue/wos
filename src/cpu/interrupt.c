@@ -75,7 +75,7 @@ typedef struct {
     uint64_t base;
 } __attribute__((packed)) idtr;
 
-idt_entry idt_64[64];
+idt_entry idt_64[256];
 idtr idtr_64;
 
 void (*isr_handlers[32])(isr_regs*);
@@ -83,28 +83,24 @@ void (*irq_handlers[16])(irq_regs*, void*);
 void* irq_handler_data[16];
 
 void idt_set_gate(size_t gate, void (*function)(void)){
-    idt_entry entry = idt_64[gate];
+    idt_64[gate].segment_selector = 0x08;
+    idt_64[gate].flags.type = 0xE;
+    idt_64[gate].flags.zero = 0;
+    idt_64[gate].flags.dpl = 0;
+    idt_64[gate].flags.type = 1;
+    idt_64[gate].reserved = 0;
+    idt_64[gate].zero = 0;
 
-    entry.segment_selector = 0x08;
-    idt_flags flags;
-    flags.type = 0xE;
-    flags.zero = 0;
-    flags.dpl = 0;
-    flags.present = 1;
-    entry.flags = flags;
-    entry.reserved = 0;
-    entry.zero = 0;
+    uint64_t addr = (uint64_t)function;
 
-    uint64_t addr = (uint64_t)&function;
-
-    entry.offset_low = addr & 0xFFFF;
-    entry.offset_middle = (addr >> 16) & 0xFFFF;
-    entry.offset_high= addr  >> 32;
+    idt_64[gate].offset_low = addr & 0xFFFF;
+    idt_64[gate].offset_middle = (addr >> 16) & 0xFFFF;
+    idt_64[gate].offset_high= addr  >> 32;
 }
 
 void install_idt(){
     //Set the correct values inside IDTR
-    idtr_64.limit = (64 * 16) - 1;
+    idtr_64.limit = (256 * sizeof(idt_entry)) - 1;
     idtr_64.base = (uint64_t)&idt_64;
 
     asm volatile("lidt (%0)" : : "r" (&idtr_64));

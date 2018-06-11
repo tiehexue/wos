@@ -10,9 +10,14 @@ SECTIONS {
 
     .text :
     {
-        *(.text)
+        *(.text, .comment)
     }
-    
+
+    .debug :
+    {
+        *(.debug*)
+    }
+
     .bss : ALIGN(4K)
     {
         *(.bss)
