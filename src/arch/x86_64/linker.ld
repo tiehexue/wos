@@ -5,7 +5,6 @@ SECTIONS {
 
     .boot :
     {
-        /* ensure that the multiboot header is at the beginning */
         *(.multiboot_header)
     }
 
@@ -13,8 +12,8 @@ SECTIONS {
     {
         *(.text)
     }
-
-    .bss :
+    
+    .bss : ALIGN(4K)
     {
         *(.bss)
     }

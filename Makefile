@@ -45,8 +45,8 @@ run: $(iso)
 	$(QEMU) $(QEMUFLAGS) -cdrom $(iso)
 
 debug: $(iso)
-	$(QEMU) $(QEMUFLAGS) -cdrom $(iso) &
-	${GDB} -ex "target remote localhost:1234" -ex "symbol-file $(kernel)"
+	$(QEMU) -s $(QEMUFLAGS) -cdrom $(iso) &
+	${GDB}  -ex "target remote localhost:1234" -ex "symbol-file $(kernel)"
 
 iso: $(iso)
 

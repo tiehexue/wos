@@ -75,9 +75,10 @@ typedef struct {
     uint64_t base;
 } __attribute__((packed)) idtr;
 
-idt_entry idt_64[256];
+idt_entry idt_64[64];
 idtr idtr_64;
 
+void (*isr_handlers[32])(isr_regs*);
 void (*irq_handlers[16])(irq_regs*, void*);
 void* irq_handler_data[16];
 
@@ -94,36 +95,25 @@ void idt_set_gate(size_t gate, void (*function)(void)){
     entry.reserved = 0;
     entry.zero = 0;
 
-    uint64_t addr = (uint64_t)function;
+    uint64_t addr = (uint64_t)&function;
 
     entry.offset_low = addr & 0xFFFF;
     entry.offset_middle = (addr >> 16) & 0xFFFF;
     entry.offset_high= addr  >> 32;
 }
 
-uint64_t get_cr2(){
-    uint64_t value;
-    asm volatile("mov %%rax, %%cr2" : :);
-    asm volatile("mov %0, %%rax;" : "=m" (value));
-    return value;
-}
-
-uint64_t get_cr3(){
-    uint64_t value;
-    asm volatile("mov %%rax, %%cr3; mov %0, %%rax;" : "=m" (value));
-    return value;
-}
-
 void install_idt(){
     //Set the correct values inside IDTR
     idtr_64.limit = (64 * 16) - 1;
+    idtr_64.base = (uint64_t)&idt_64;
+
+    asm volatile("lidt (%0)" : : "r" (&idtr_64));
 
     //Give the IDTR address to the CPU
-    asm volatile("lidt %0" : : "m" (idtr_64));
+    //asm volatile("lidt %0" : : "m" (idtr_64));
 }
 
 void install_isrs(){
-    uint16_t gdt = 0x08;
 
     idt_set_gate(0, isr0);
     idt_set_gate(1, isr1);
@@ -199,11 +189,15 @@ void install_irqs(){
     idt_set_gate(47, irq15);
 }
 
+void disable_interrupts(){
+   asm volatile("cli" : : );
+}
+
 void enable_interrupts(){
     asm volatile("sti" : : );
 }
 
-char* exceptions_title[32] = {
+char* exception_messages[32] = {
     "Division by zero",
     "Debugger",
     "NMI",
@@ -238,11 +232,20 @@ char* exceptions_title[32] = {
     "Reserved"
 };
 
-void isr_handler(isr_regs regs){
-    kprintln("SYSTEM INTERRUPT");
+void isr_handler(isr_regs* regs){
+    kprint("Received interrupt ");
+    kprintln_int(regs->error_no);
+    kprintln(exception_messages[regs->error_no]);
+
+    if (isr_handlers[regs->error_no] != 0) {
+        isr_handlers[regs->error_no](regs);
+    }
 }
 
 void irq_handler(irq_regs* regs){
+    kprint("Received interrupt ");
+    kprintln_int(regs->code);
+
     //If the IRQ is on the slave controller, send EOI to it
     if(regs->code >= 8){
         port_word_out(0xA0, 0x20);
@@ -292,6 +295,9 @@ bool unregister_irq_handler(size_t irq, void (*handler)(irq_regs*, void*)){
 }
 
 void interrupt_init(){
+
+    disable_interrupts();
+
     install_idt();
     install_isrs();
     remap_irqs();

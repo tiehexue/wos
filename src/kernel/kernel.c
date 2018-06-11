@@ -6,6 +6,8 @@ void kernel_main() {
 
   interrupt_init();
 
+  //asm volatile("int $1");
+
   kprint("shell$ ");
   for(;;);
 }
