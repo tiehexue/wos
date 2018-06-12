@@ -12,7 +12,9 @@ GRUB = $(BIN_PREFIX)/grub-mkrescue
 NASM = /usr/local/Cellar/nasm/2.13.03/bin/nasm
 QEMU = /usr/local/bin/qemu-system-x86_64
 
-CFLAGS = -g -ffreestanding
+CFLAGS = -masm=intel -nostdlib -g -Os -fno-stack-protector -fno-exceptions \
+	-funsigned-char -ffreestanding -fomit-frame-pointer -mno-red-zone -mno-3dnow \
+	-mno-mmx -fno-asynchronous-unwind-tables -Isrc/tstl/include/
 CXXFLAGS = $(CFLAGS) -std=c++11 -fno-rtti
 ASFLAGS = -f elf64
 QEMUFLAGS = -m 4096M
