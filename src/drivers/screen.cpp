@@ -4,9 +4,9 @@
 #include "../libc/string.hpp"
 
 static int get_cursor_offset() {
-  out_byte(REG_SCREEN_CTRL, 14);
+  out_byte(14, REG_SCREEN_CTRL);
   int offset = in_byte(REG_SCREEN_DATA) << 8;
-  out_byte(REG_SCREEN_CTRL, 15);
+  out_byte(15, REG_SCREEN_CTRL);
   offset += in_byte(REG_SCREEN_DATA);
 
   return offset * 2;
@@ -14,10 +14,10 @@ static int get_cursor_offset() {
 
 static void set_cursor_offset(int offset) {
   offset /= 2;
-  out_byte(REG_SCREEN_CTRL, 14);
-  out_byte(REG_SCREEN_DATA, (unsigned char)(offset >> 8));
-  out_byte(REG_SCREEN_CTRL, 15);
-  out_byte(REG_SCREEN_DATA, (unsigned char)(offset & 0xff));
+  out_byte(14, REG_SCREEN_CTRL);
+  out_byte((unsigned char)(offset >> 8), REG_SCREEN_DATA);
+  out_byte(15, REG_SCREEN_CTRL);
+  out_byte((unsigned char)(offset & 0xff), REG_SCREEN_DATA);
 }
 
 static int get_offset(int col, int row) { return 2 * (row * MAX_COLS + col); }
