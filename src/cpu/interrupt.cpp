@@ -240,13 +240,17 @@ const char* exceptions_title[32] {
 extern "C" {
 
 void isr_handler(interrupt::fault_regs regs){
-   kprint("INTERRUPTS: ");
+   kprint("INTERRUPTS ISR: ");
    kprint_int(regs.error_no);
+   kprint(", ");
+   kprint(exceptions_title[regs.error_no]);
+   kprint(", ");
+   kprint_int(regs.error_code);
    kprintln("");
 }
 
 void irq_handler(interrupt::syscall_regs* regs){
-    kprint("INTERRUPTS: ");
+    kprint("INTERRUPTS IRQ: ");
     kprint_int(regs->code);
     kprintln("");
 
@@ -307,8 +311,7 @@ bool interrupt::unregister_irq_handler(size_t irq, void (*handler)(interrupt::sy
 }
 
 void interrupt::setup_interrupts(){
-    asm volatile("cli");
-    
+
     install_idt();
     install_isrs();
     remap_irqs();

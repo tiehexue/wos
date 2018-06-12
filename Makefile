@@ -12,7 +12,7 @@ GRUB = $(BIN_PREFIX)/grub-mkrescue
 NASM = /usr/local/Cellar/nasm/2.13.03/bin/nasm
 QEMU = /usr/local/bin/qemu-system-x86_64
 
-CFLAGS = -masm=intel -nostdlib -g -Os -fno-stack-protector -fno-exceptions \
+CFLAGS = -g -fpermissive -masm=intel -nostdlib -Os -fno-stack-protector -fno-exceptions \
 	-funsigned-char -ffreestanding -fomit-frame-pointer -mno-red-zone -mno-3dnow \
 	-mno-mmx -fno-asynchronous-unwind-tables -Isrc/tstl/include/
 CXXFLAGS = $(CFLAGS) -std=c++11 -fno-rtti
@@ -27,14 +27,14 @@ boot_obj := $(patsubst src/arch/$(arch)/%.asm, \
 
 subdirs := $(wildcard src/*/)
 as_subdirs := $(filter-out src/arch, $(subdirs))
-as_src := $(wildcard $(addsuffix *.asm,$(as_subdirs)))
-as_obj := $(patsubst src/%.asm, build/%.o,$(as_src))
+as_src := $(wildcard $(addsuffix *.asm, $(as_subdirs)))
+as_obj := $(patsubst src/%.asm, build/%.o, $(as_src))
 
 c_src := $(wildcard $(addsuffix *.c,$(subdirs)))
-c_obj := $(patsubst src/%.c, build/%.o,$(c_src))
+c_obj := $(patsubst src/%.c, build/%.o, $(c_src))
 
-cpp_src := $(wildcard $(addsuffix *.cpp,$(subdirs)))
-cpp_obj := $(patsubst src/%.cpp, build/%.o,$(cpp_src))
+cpp_src := $(wildcard $(addsuffix *.cpp, $(subdirs)))
+cpp_obj := $(patsubst src/%.cpp, build/%.o, $(cpp_src))
 
 .PHONY: all clean run iso
 
