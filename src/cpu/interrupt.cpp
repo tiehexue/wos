@@ -158,23 +158,23 @@ void install_isrs(){
 
 void remap_irqs(){
     //Restart the both PICs
-    out_byte(0x20, 0x11);
-    out_byte(0xA0, 0x11);
+    out_byte(0x11, 0x20);
+    out_byte(0x11, 0xA0);
 
-    out_byte(0x21, 0x20); //Make PIC1 start at 32
-    out_byte(0xA1, 0x28); //Make PIC2 start at 40
+    out_byte(0x20, 0x21); //Make PIC1 start at 32
+    out_byte(0x28, 0xA1); //Make PIC2 start at 40
 
     //Setup cascading for both PICs
-    out_byte(0x21, 0x04);
-    out_byte(0xA1, 0x02);
+    out_byte(0x04, 0x21);
+    out_byte(0x02, 0xA1);
 
     //8086 mode for both PICs
-    out_byte(0x21, 0x01);
-    out_byte(0xA1, 0x01);
+    out_byte(0x01, 0x21);
+    out_byte(0x01, 0xA1);
 
     //Activate all IRQs in both PICs
-    out_byte(0x21, 0x0);
-    out_byte(0xA1, 0x0);
+    out_byte(0x0, 0x21);
+    out_byte(0x0, 0xA1);
 }
 
 void install_irqs(){
