@@ -159,6 +159,8 @@ gdt64:
     dq 0 ; zero entry
 .code: equ $ - gdt64 ; new
     dq (1<<43) | (1<<44) | (1<<47) | (1<<53) ; code segment
+    dq 0x0000920000000000             ; 64-bit data descriptor (read/write).
+    
 .pointer:
     dw $ - gdt64 - 1
     dq gdt64

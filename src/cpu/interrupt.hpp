@@ -2,9 +2,14 @@
 #define INTERRUPTS_H
 
 #include <stdint.h>
-#include "../kernel/types.h"
+#include "../kernel/types.hpp"
 
-typedef struct {
+namespace interrupt {
+
+constexpr const size_t SYSCALL_FIRST = 50;
+constexpr const size_t SYSCALL_MAX = 10;
+
+struct fault_regs {
     uint64_t rbp;
     uint64_t error_no;
     uint64_t error_code;
@@ -13,9 +18,9 @@ typedef struct {
     uint64_t cs;
     uint64_t rsp;
     uint64_t ss;
-} __attribute__((packed)) isr_regs;
+} __attribute__((packed));
 
-typedef struct {
+struct syscall_regs {
     sse_128 xmm_registers[16];
     uint64_t rax;
     uint64_t rbx;
@@ -38,12 +43,14 @@ typedef struct {
     uint64_t rflags;
     uint64_t rsp;
     uint64_t ds;
-} __attribute__((packed)) irq_regs;
+} __attribute__((packed));
 
-void interrupt_init();
+void setup_interrupts();
 
-bool register_irq_handler(size_t irq, void (*handler)(irq_regs*, void*), void* data);
+bool register_irq_handler(size_t irq, void (*handler)(syscall_regs*, void*), void* data);
 
-bool unregister_irq_handler(size_t irq, void (*handler)(irq_regs*, void*));
+bool unregister_irq_handler(size_t irq, void (*handler)(syscall_regs*, void*));
+
+} //end of interrupt namespace
 
 #endif

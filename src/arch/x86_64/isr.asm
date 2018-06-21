@@ -57,12 +57,8 @@ create_isr_dummy 30
 create_isr_dummy 31
 
 isr_common_handler:
-  save_context
-  restore_kernel_segments
 
   call isr_handler
-
-  restore_context
 
   add rsp, 16
 

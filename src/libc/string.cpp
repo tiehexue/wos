@@ -1,4 +1,4 @@
-#include "string.h"
+#include "string.hpp"
 
 static void reverse(char s[]) {
   int c, i, j;

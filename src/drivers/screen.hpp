@@ -14,14 +14,14 @@ void clear_screen();
 
 int kprint_backspace();
 
-void kprint_at(char *message, int col, int row);
-void kprint(char *message);
-void kprintln(char *message);
+void kprint_at(const char *message, int col, int row);
+void kprint(const char *message);
+void kprintln(const char *message);
 
 void kprint_hex(int a);
 void kprint_int(int b);
 
-void panic(char *message);
+void panic(const char *message);
 
 #define kprintln_hex(x) kprint_hex(x);kprintln("");
 #define kprintln_int(x) kprint_int(x);kprintln("");
